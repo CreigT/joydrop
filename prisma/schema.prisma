@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  firebaseUid    String?        @unique
+  birthday_mm_dd String
+  timezone       String         @default("America/Los_Angeles")
+  created_at     DateTime       @default(now())
+  paused_bool    Boolean        @default(false)
+  soft_delete    Boolean        @default(false)
+  contributions  Contribution[]
+  surprises      Surprise[]
+  audit_logs     AuditLog[]
+  birthday_page  BirthdayPage?
+  guestbook      GuestbookEntry[]
+  gifts          Gift[]
+}
+
+model Contribution {
+  id                String   @id @default(cuid())
+  user_id           String
+  user              User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  contributor_name  String
+  contributor_email String
+  message_text      String?
+  voice_url         String?
+  photo_url         String?
+  type              String   @default("text")
+  fileUrl           String?
+  thumbnailUrl      String?
+  isApproved        Boolean  @default(false)
+  consent_bool      Boolean  @default(false)
+  created_at        DateTime @default(now())
+  soft_delete       Boolean  @default(false)
+}
+
+model Surprise {
+  id            String         @id @default(cuid())
+  user_id       String
+  user          User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  birthday_page BirthdayPage?
+  script_text   String
+  audio_url     String?
+  video_url     String?
+  status        SurpriseStatus @default(draft)
+  scheduled_for DateTime?
+  sent_at       DateTime?
+  soft_delete   Boolean        @default(false)
+}
+
+model BirthdayPage {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unlockAt    DateTime
+  isLocked    Boolean   @default(true)
+  isPublic    Boolean   @default(false)
+  slug        String    @unique @default(cuid())
+  viewCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  surpriseId  String?   @unique
+  surprise    Surprise? @relation(fields: [surpriseId], references: [id], onDelete: SetNull)
+  soft_delete Boolean   @default(false)
+}
+
+model GuestbookEntry {
+  id          String   @id @default(cuid())
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  name        String
+  message     String
+  reactions   Json?
+  created_at  DateTime @default(now())
+  soft_delete Boolean  @default(false)
+}
+
+model Gift {
+  id          String   @id @default(cuid())
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  from_name   String
+  title       String
+  amount      Int      @default(0)
+  goal        Int      @default(0)
+  created_at  DateTime @default(now())
+  soft_delete Boolean  @default(false)
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  user_id     String?
+  user        User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  meta_json   Json?
+  created_at  DateTime @default(now())
+  soft_delete Boolean  @default(false)
+}
+
+enum SurpriseStatus {
+  draft
+  approved
+  sent
+}
