@@ -1,10 +1,15 @@
 import { redirect } from "next/navigation";
+import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
   request: Request,
   { params }: { params: { userId: string } }
 ) {
+  if (!hasDatabaseUrl()) {
+    return databaseUnavailableResponse();
+  }
+
   const formData = await request.formData();
   const name = String(formData.get("name") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();

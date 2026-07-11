@@ -1,9 +1,14 @@
+import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
   _request: Request,
   { params }: { params: { userId: string } }
 ) {
+  if (!hasDatabaseUrl()) {
+    return databaseUnavailableResponse();
+  }
+
   const page = await prisma.birthdayPage.findUnique({
     where: {
       userId: params.userId

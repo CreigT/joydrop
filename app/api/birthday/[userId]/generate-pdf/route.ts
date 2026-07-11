@@ -6,6 +6,7 @@ import {
   View,
   renderToBuffer
 } from "@react-pdf/renderer";
+import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 
@@ -83,6 +84,11 @@ export async function GET(
   { params }: { params: { userId: string } }
 ) {
   const firebaseUser = await getCurrentFirebaseUser();
+
+  if (!hasDatabaseUrl()) {
+    return databaseUnavailableResponse();
+  }
+
   const user = await prisma.user.findUnique({
     where: {
       id: params.userId

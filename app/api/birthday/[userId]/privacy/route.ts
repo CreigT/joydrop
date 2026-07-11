@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 
@@ -7,6 +8,11 @@ export async function POST(
   { params }: { params: { userId: string } }
 ) {
   const firebaseUser = await getCurrentFirebaseUser();
+
+  if (!hasDatabaseUrl()) {
+    return databaseUnavailableResponse();
+  }
+
   const page = await prisma.birthdayPage.findUnique({
     where: {
       userId: params.userId

@@ -1,9 +1,14 @@
 import { redirect } from "next/navigation";
+import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { formatBirthday } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { uploadContributionFile } from "@/lib/storage";
 
 export async function POST(request: Request) {
+  if (!hasDatabaseUrl()) {
+    return databaseUnavailableResponse();
+  }
+
   const formData = await request.formData();
   const userId = String(formData.get("user_id") ?? "");
   const contributorName = String(formData.get("contributor_name") ?? "").trim();

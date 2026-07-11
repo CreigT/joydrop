@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { hasDatabaseUrl } from "@/lib/database";
 import { birthdayInNext30Days, formatBirthday } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
@@ -8,6 +9,24 @@ export default async function DashboardPage() {
 
   if (!session) {
     redirect("/login?next=/dashboard");
+  }
+
+  if (!hasDatabaseUrl()) {
+    return (
+      <main className="min-h-screen bg-bg px-5 py-8">
+        <section className="mx-auto max-w-3xl rounded-2xl bg-white/90 p-7 shadow-xl ring-1 ring-white/80">
+          <p className="inline-flex rounded-full bg-accent px-4 py-2 text-sm font-black text-[#30273A]">
+            JoyDrop
+          </p>
+          <h1 className="mt-4 font-heading text-3xl font-black text-[#30273A]">
+            Upcoming birthdays next 30 days
+          </h1>
+          <p className="mt-4 text-sm font-semibold leading-7 text-[#463B52]">
+            JoyDrop data is temporarily unavailable.
+          </p>
+        </section>
+      </main>
+    );
   }
 
   const users = (
@@ -69,7 +88,7 @@ export default async function DashboardPage() {
                       {user.name}
                     </h2>
                     <p className="mt-1 text-sm font-semibold text-[#463B52]">
-                      {formatBirthday(user.birthday_mm_dd)} · {user.email}
+                      {formatBirthday(user.birthday_mm_dd)} - {user.email}
                     </p>
                     <form action="/api/generate" className="mt-5" method="post">
                       <input name="user_id" type="hidden" value={user.id} />

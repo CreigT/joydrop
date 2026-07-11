@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { birthdayUnlockDate } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { displayNameFromToken, getCurrentFirebaseUser } from "@/lib/session";
@@ -8,6 +9,10 @@ export async function POST(request: Request) {
 
   if (!firebaseUser) {
     redirect("/login?next=/");
+  }
+
+  if (!hasDatabaseUrl()) {
+    return databaseUnavailableResponse();
   }
 
   const formData = await request.formData();

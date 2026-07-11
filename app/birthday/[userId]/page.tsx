@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 import { BirthdayBridge } from "./BirthdayBridge";
@@ -8,6 +9,10 @@ export default async function BirthdayPage({
 }: {
   params: { userId: string };
 }) {
+  if (!hasDatabaseUrl()) {
+    notFound();
+  }
+
   const page = await prisma.birthdayPage.update({
     where: {
       userId: params.userId

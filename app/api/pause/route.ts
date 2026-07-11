@@ -1,6 +1,11 @@
+import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
+  if (!hasDatabaseUrl()) {
+    return databaseUnavailableResponse();
+  }
+
   const url = new URL(request.url);
   const userId = url.searchParams.get("user_id");
 

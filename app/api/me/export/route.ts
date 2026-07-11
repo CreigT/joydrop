@@ -1,3 +1,4 @@
+import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 
@@ -7,6 +8,10 @@ export async function GET() {
 
   if (!session || !email) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!hasDatabaseUrl()) {
+    return databaseUnavailableResponse();
   }
 
   const user = await prisma.user.findFirst({

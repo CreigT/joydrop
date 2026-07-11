@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { hasDatabaseUrl } from "@/lib/database";
 import { formatBirthday } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 
@@ -10,12 +11,18 @@ export default async function InvitePage({
 }: {
   params: { user_id: string };
 }) {
-  const user = await prisma.user.findFirst({
-    where: {
-      id: params.user_id,
-      soft_delete: false
-    }
-  });
+  if (!hasDatabaseUrl()) {
+    notFound();
+  }
+
+  const user = await prisma.user
+    .findFirst({
+      where: {
+        id: params.user_id,
+        soft_delete: false
+      }
+    })
+    .catch(() => null);
 
   if (!user) {
     notFound();

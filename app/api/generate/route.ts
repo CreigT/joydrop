@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createBirthdayScript, createVoiceAudio } from "@/lib/ai";
+import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { scheduledBirthdayDate } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
@@ -9,6 +10,10 @@ export async function POST(request: Request) {
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!hasDatabaseUrl()) {
+    return databaseUnavailableResponse();
   }
 
   const formData = await request.formData();
