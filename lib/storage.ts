@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { getFirebaseAdminStorage } from "@/lib/firebase-admin";
+import { joydropFirebaseStorageBucket } from "@/lib/firebase-project";
 import { fileToDataUrl } from "@/lib/media";
 
 export async function uploadContributionFile(
@@ -11,7 +12,7 @@ export async function uploadContributionFile(
     return null;
   }
 
-  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  const bucketName = joydropFirebaseStorageBucket;
 
   if (!bucketName) {
     return fileToDataUrl(file);
