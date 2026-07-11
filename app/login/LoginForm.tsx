@@ -11,6 +11,42 @@ import { auth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 const fieldClass =
   "w-full rounded-2xl border border-white/70 bg-white/85 px-4 py-3 text-sm shadow-sm outline-none transition focus:border-secondary focus:ring-4 focus:ring-secondary/20";
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function signInErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) {
+    return "Email sign in failed.";
+  }
+
+  if (error.message.includes("auth/invalid-email")) {
+    return "Enter a valid email address.";
+  }
+
+  if (error.message.includes("auth/missing-password")) {
+    return "Enter your password.";
+  }
+
+  if (error.message.includes("auth/weak-password")) {
+    return "Use a password with at least 6 characters.";
+  }
+
+  if (error.message.includes("auth/email-already-in-use")) {
+    return "That email already has a JoyDrop account. Try Email Sign In.";
+  }
+
+  if (
+    error.message.includes("auth/user-not-found") ||
+    error.message.includes("auth/wrong-password") ||
+    error.message.includes("auth/invalid-credential")
+  ) {
+    return "Check your email and password, then try again.";
+  }
+
+  return error.message;
+}
+
 export function LoginForm({ nextPath }: { nextPath: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,6 +93,16 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       return;
     }
 
+    if (!isValidEmail(email)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+
+    if (!password) {
+      setError("Enter your password.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -67,7 +113,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           : await signInWithEmailAndPassword(auth, email, password);
       await setSession(await result.user.getIdToken());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Email sign in failed.");
+      setError(signInErrorMessage(err));
       setLoading(false);
     }
   }
