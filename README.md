@@ -1,6 +1,28 @@
 # JoyDrop
 
-Permission-first AI birthday automation app built with Next.js 14, TypeScript, TailwindCSS, Prisma, PostgreSQL, Firebase Auth, OpenAI, ElevenLabs, and Vercel Cron.
+JoyDrop is a permission-first AI birthday automation app that helps friends create consent-based birthday surprises. Recipients opt in, friends contribute messages and media through invite links, an admin reviews the AI-generated draft, and the final Birthday Bridge page unlocks on the recipient's birthday.
+
+## What It Does
+
+- Public opt-in flow with explicit consent checkboxes
+- Firebase login with Google and email/password support
+- Friend invite flow for text, voice, photo, video, and GIF contributions
+- Admin dashboard for upcoming birthdays, contribution review, and AI speech generation
+- Birthday Bridge page with countdown, confetti, AI speech player, Memory Wall, guestbook, gift tracker, keepsake PDF, and privacy controls
+- Daily Vercel Cron route for unlocking approved Birthday Bridge pages
+- Prisma/PostgreSQL schema with soft-delete support and data export/erase routes
+
+## Tech Stack
+
+- Next.js 14
+- TypeScript
+- TailwindCSS
+- Prisma
+- PostgreSQL
+- Firebase Auth and Firebase Admin
+- OpenAI GPT-4o
+- ElevenLabs
+- Vercel Cron
 
 ## Local Setup
 
@@ -37,3 +59,7 @@ npm.cmd run build
 ```
 
 Vercel Cron is configured in `vercel.json` to call `/api/cron/daily` every day at 14:00 UTC. The route accepts either `Authorization: Bearer CRON_SECRET` or `?secret=CRON_SECRET` for manual testing.
+
+## Repository Description
+
+Permission-first AI birthday automation app with opt-in invites, reviewed AI surprises, and a Birthday Bridge memory page.
