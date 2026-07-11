@@ -11,7 +11,7 @@ export async function verifySessionToken(token?: string | null) {
   }
 
   try {
-    return await getFirebaseAdminAuth().verifyIdToken(token);
+    return await getFirebaseAdminAuth().verifySessionCookie(token, true);
   } catch {
     return null;
   }

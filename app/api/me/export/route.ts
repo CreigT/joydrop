@@ -1,16 +1,17 @@
 import { prisma } from "@/lib/prisma";
+import { getCurrentFirebaseUser } from "@/lib/session";
 
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const email = url.searchParams.get("email")?.toLowerCase();
+export async function GET() {
+  const session = await getCurrentFirebaseUser();
+  const email = session?.email?.toLowerCase();
 
-  if (!email) {
-    return Response.json({ error: "Email is required." }, { status: 400 });
+  if (!session || !email) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.user.findFirst({
     where: {
-      email
+      OR: [{ firebaseUid: session.uid }, { email }]
     },
     include: {
       contributions: true,

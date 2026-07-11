@@ -1,16 +1,28 @@
 import { prisma } from "@/lib/prisma";
+import { getCurrentFirebaseUser } from "@/lib/session";
 
-export async function DELETE(request: Request) {
-  const body = (await request.json().catch(() => null)) as { email?: string } | null;
-  const email = body?.email?.toLowerCase();
+export async function DELETE() {
+  const session = await getCurrentFirebaseUser();
+  const email = session?.email?.toLowerCase();
 
-  if (!email) {
-    return Response.json({ error: "Email is required." }, { status: 400 });
+  if (!session || !email) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ firebaseUid: session.uid }, { email }],
+      soft_delete: false
+    }
+  });
+
+  if (!existingUser) {
+    return Response.json({ error: "User not found." }, { status: 404 });
   }
 
   const user = await prisma.user.update({
     where: {
-      email
+      id: existingUser.id
     },
     data: {
       soft_delete: true,
