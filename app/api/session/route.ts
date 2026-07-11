@@ -12,19 +12,27 @@ export async function POST(request: Request) {
     return Response.json({ error: "Firebase ID token is required." }, { status: 400 });
   }
 
-  const auth = getFirebaseAdminAuth();
-  const decoded = await auth.verifyIdToken(token);
-  const sessionCookie = await auth.createSessionCookie(token, {
-    expiresIn: sessionDurationMs
-  });
+  try {
+    const auth = getFirebaseAdminAuth();
+    const decoded = await auth.verifyIdToken(token);
+    const sessionCookie = await auth.createSessionCookie(token, {
+      expiresIn: sessionDurationMs
+    });
 
-  cookies().set(sessionCookieName, sessionCookie, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: sessionDurationMs / 1000
-  });
+    cookies().set(sessionCookieName, sessionCookie, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: sessionDurationMs / 1000
+    });
 
-  return Response.json({ uid: decoded.uid });
+    return Response.json({ uid: decoded.uid });
+  } catch (error) {
+    console.error("Unable to create JoyDrop session", error);
+    return Response.json(
+      { error: "Unable to create JoyDrop session." },
+      { status: 500 }
+    );
+  }
 }
