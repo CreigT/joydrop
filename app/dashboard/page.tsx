@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { hasDatabaseUrl } from "@/lib/database";
 import { birthdayInNext30Days, formatBirthday } from "@/lib/dates";
@@ -99,6 +100,12 @@ export default async function DashboardPage() {
                         Generate Speech
                       </button>
                     </form>
+                    <Link
+                      className="mt-3 inline-flex rounded-2xl bg-accent px-5 py-3 font-heading font-black text-[#30273A] shadow-lg"
+                      href={`/cards/new?type=birthday&name=${encodeURIComponent(user.name)}`}
+                    >
+                      Make a video card
+                    </Link>
                   </div>
 
                   <div className="space-y-4">
