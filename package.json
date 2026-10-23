@@ -12,7 +12,9 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "test": "tsx --test lib/__tests__/*.test.ts lib/videoCard/__tests__/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@react-pdf/renderer": "^3.4.5",

@@ -20,6 +20,16 @@ export default function TermsPage() {
             By using JoyDrop, you agree not to submit unlawful, harmful, or
             non-consensual content.
           </p>
+          <p>
+            Video Cards: previews are free and watermarked. Paid cards are
+            digital items made on your device and, once unlocked, are
+            non-refundable unless the file fails to download or play. See the{" "}
+            <a className="underline" href="/pricing">
+              pricing page
+            </a>{" "}
+            for the full refund note. Video Cards are only ever created from
+            what you type and are never sent to anyone on your behalf.
+          </p>
         </div>
       </section>
     </main>

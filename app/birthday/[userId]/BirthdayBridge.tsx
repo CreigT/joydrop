@@ -5,6 +5,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import Confetti from "react-confetti";
+import Link from "next/link";
+import { BirthdayCardPlayer } from "@/components/cards/BirthdayCardPlayer";
 
 type Contribution = {
   id: string;
@@ -150,6 +152,25 @@ export function BirthdayBridge({
             </div>
           </div>
         ) : null}
+
+        {unlocked ? (
+          <BirthdayCardPlayer
+            makeCardHref="/cards/new?type=birthday"
+            name={user.name}
+          />
+        ) : null}
+
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-white/90 p-4 shadow-xl ring-1 ring-white/80">
+          <p className="text-sm font-semibold text-[#463B52]">
+            Want to cheer someone on too? Previewing a card is free.
+          </p>
+          <Link
+            className="rounded-2xl bg-primary px-4 py-2 text-sm font-black text-white shadow-lg shadow-primary/30"
+            href={`/cards/new?type=birthday&name=${encodeURIComponent(user.name)}`}
+          >
+            Make a video card
+          </Link>
+        </div>
 
         <section className="rounded-2xl bg-white/90 p-5 shadow-xl ring-1 ring-white/80">
           <div className="flex flex-wrap items-center justify-between gap-3">
