@@ -19,7 +19,7 @@ export default async function DashboardPage() {
             JoyDrop
           </p>
           <h1 className="mt-4 font-heading text-3xl font-black text-[#30273A]">
-            Upcoming birthdays next 30 days
+            Your Birthday
           </h1>
           <p className="mt-4 text-sm font-semibold leading-7 text-[#463B52]">
             JoyDrop data is temporarily unavailable.
@@ -29,36 +29,33 @@ export default async function DashboardPage() {
     );
   }
 
-  const users = (
-    await prisma.user.findMany({
-      where: {
-        paused_bool: false,
-        soft_delete: false
-      },
-      include: {
-        contributions: {
-          where: {
-            soft_delete: false,
-            consent_bool: true
-          },
-          orderBy: {
-            created_at: "desc"
-          }
+  const currentUser = await prisma.user.findFirst({
+    where: {
+      firebaseUid: session.uid,
+      soft_delete: false
+    },
+    include: {
+      contributions: {
+        where: {
+          soft_delete: false,
+          consent_bool: true
         },
-        surprises: {
-          where: {
-            soft_delete: false
-          },
-          orderBy: {
-            scheduled_for: "desc"
-          }
+        orderBy: {
+          created_at: "desc"
         }
       },
-      orderBy: {
-        birthday_mm_dd: "asc"
+      surprises: {
+        where: {
+          soft_delete: false
+        },
+        orderBy: {
+          scheduled_for: "desc"
+        }
       }
-    })
-  ).filter((user) => birthdayInNext30Days(user.birthday_mm_dd));
+    }
+  });
+
+  const users = currentUser && birthdayInNext30Days(currentUser.birthday_mm_dd) ? [currentUser] : [];
 
   return (
     <main className="min-h-screen bg-bg px-5 py-8">
@@ -68,11 +65,16 @@ export default async function DashboardPage() {
             JoyDrop
           </p>
           <h1 className="mt-4 font-heading text-4xl font-black text-[#30273A]">
-            Upcoming birthdays next 30 days
+            Your Birthday
           </h1>
         </div>
 
         <div className="grid gap-5">
+          {users.length === 0 ? (
+            <p className="rounded-2xl bg-white/90 p-5 text-sm font-semibold text-[#463B52] shadow-xl ring-1 ring-white/80">
+              No upcoming birthday found for your account, or you have not opted in yet.
+            </p>
+          ) : null}
           {users.map((user) => {
             const latestDraft = user.surprises.find(
               (surprise) => surprise.status === "draft" || surprise.status === "approved"
