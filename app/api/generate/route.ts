@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       script_text: scriptText,
       audio_url: audioUrl,
       video_url: null,
-      status: "approved",
+      status: "draft",
       scheduled_for: scheduledBirthdayDate(user.birthday_mm_dd)
     }
   });
