@@ -2,8 +2,6 @@ import { sendBirthdaySurprise } from "@/lib/delivery";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const secret = url.searchParams.get("secret");
   const authHeader = request.headers.get("authorization");
 
   if (!process.env.CRON_SECRET && process.env.NODE_ENV === "production") {
@@ -15,7 +13,6 @@ export async function GET(request: Request) {
 
   if (
     process.env.CRON_SECRET &&
-    secret !== process.env.CRON_SECRET &&
     authHeader !== `Bearer ${process.env.CRON_SECRET}`
   ) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
