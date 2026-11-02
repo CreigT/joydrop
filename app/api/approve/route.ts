@@ -20,7 +20,21 @@ export async function POST(request: Request) {
   const scriptText = String(formData.get("script_text") ?? "").trim();
 
   if (contributionId) {
-    const contribution = await prisma.contribution.update({
+    const contribution = await prisma.contribution.findFirst({
+      where: {
+        id: contributionId,
+        user: {
+          firebaseUid: session.uid,
+          soft_delete: false
+        }
+      }
+    });
+
+    if (!contribution) {
+      return Response.json({ error: "Contribution not found or access denied." }, { status: 403 });
+    }
+
+    const updated = await prisma.contribution.update({
       where: {
         id: contributionId
       },
@@ -32,9 +46,9 @@ export async function POST(request: Request) {
     await prisma.auditLog.create({
       data: {
         action: "contribution_approved",
-        user_id: contribution.user_id,
+        user_id: updated.user_id,
         meta_json: {
-          contribution_id: contribution.id
+          contribution_id: updated.id
         }
       }
     });
@@ -42,7 +56,25 @@ export async function POST(request: Request) {
     redirect("/dashboard");
   }
 
-  const surprise = await prisma.surprise.update({
+  if (!surpriseId) {
+    return Response.json({ error: "Missing contribution_id or surprise_id." }, { status: 400 });
+  }
+
+  const surprise = await prisma.surprise.findFirst({
+    where: {
+      id: surpriseId,
+      user: {
+        firebaseUid: session.uid,
+        soft_delete: false
+      }
+    }
+  });
+
+  if (!surprise) {
+    return Response.json({ error: "Surprise not found or access denied." }, { status: 403 });
+  }
+
+  const updatedSurprise = await prisma.surprise.update({
     where: {
       id: surpriseId
     },
@@ -55,9 +87,9 @@ export async function POST(request: Request) {
   await prisma.auditLog.create({
     data: {
       action: "surprise_approved",
-      user_id: surprise.user_id,
+      user_id: updatedSurprise.user_id,
       meta_json: {
-        surprise_id: surprise.id
+        surprise_id: updatedSurprise.id
       }
     }
   });
