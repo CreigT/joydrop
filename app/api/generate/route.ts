@@ -22,6 +22,7 @@ export async function POST(request: Request) {
   const user = await prisma.user.findFirst({
     where: {
       id: userId,
+      firebaseUid: session.uid,
       soft_delete: false
     },
     include: {
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   });
 
   if (!user) {
-    return Response.json({ error: "User not found." }, { status: 404 });
+    return Response.json({ error: "User not found or access denied." }, { status: 403 });
   }
 
   const scriptText = await createBirthdayScript(user.name, user.contributions);
