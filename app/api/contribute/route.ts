@@ -3,10 +3,16 @@ import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { formatBirthday } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { uploadContributionFile } from "@/lib/storage";
+import { validateContributionFile, checkRateLimit } from "@/lib/validation";
 
 export async function POST(request: Request) {
   if (!hasDatabaseUrl()) {
     return databaseUnavailableResponse();
+  }
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  if (!checkRateLimit(ip)) {
+    return Response.json({ error: "Too many requests. Please try again later." }, { status: 429 });
   }
 
   const formData = await request.formData();
@@ -35,6 +41,20 @@ export async function POST(request: Request) {
       { error: "Missing required contribution fields." },
       { status: 400 }
     );
+  }
+
+  const files = [
+    { file: voiceFile instanceof File ? voiceFile : null, kind: "voice" },
+    { file: photoFile instanceof File ? photoFile : null, kind: "photo" },
+    { file: videoFile instanceof File ? videoFile : null, kind: "video" },
+    { file: gifFile instanceof File ? gifFile : null, kind: "gif" }
+  ];
+
+  for (const { file, kind } of files) {
+    const error = validateContributionFile(file, kind);
+    if (error) {
+      return Response.json({ error }, { status: 400 });
+    }
   }
 
   const voiceUrl = await uploadContributionFile(
