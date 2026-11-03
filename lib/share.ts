@@ -14,3 +14,11 @@ export function smsHref(text: string) {
 export function mailtoHref(recipientName: string, text: string) {
   return `mailto:?subject=${encodeURIComponent(`A birthday card for ${recipientName}`)}&body=${encodeURIComponent(text)}`;
 }
+
+/** "https://host" from proxy request headers, or "" when the host looks wrong. */
+export function originFromHeaders(get: (name: string) => string | null) {
+  const host = (get("x-forwarded-host") ?? get("host") ?? "").split(",")[0].trim();
+  if (!host || !/^[A-Za-z0-9.-]+(:\d+)?$/.test(host)) return "";
+  const proto = (get("x-forwarded-proto") ?? "").split(",")[0].trim() === "http" ? "http" : "https";
+  return `${proto}://${host}`;
+}

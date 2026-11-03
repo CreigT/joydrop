@@ -4,7 +4,7 @@
 
 JoyDrop is a permission-first birthday page app. The birthday person signs in and opts in, shares a personal invite link, and friends send messages and media through it. The birthday person approves which messages to use, and their Birthday Bridge page unlocks at midnight Pacific Time on their birthday and shows the approved messages. Anyone can also make a one-off birthday card for a friend who hasn't signed up and send the link from their own phone or email. JoyDrop does not send email or text messages and does not use AI services.
 
-**Status (v0.1.3):** see [VERIFICATION.md](VERIFICATION.md) for what has and has not been verified on the live site.
+**Status (v0.1.4):** see [VERIFICATION.md](VERIFICATION.md) for what has and has not been verified on the live site.
 
 ## What It Does
 
@@ -55,7 +55,7 @@ Set these in Vercel Project Settings before deploying:
 
 Vercel Cron is configured in `vercel.json` to call `/api/cron/daily` every day at 14:00 UTC. The route accepts only `Authorization: Bearer CRON_SECRET` (Vercel sends this automatically when `CRON_SECRET` is set).
 
-Pushing to `main` deploys to production on Vercel (https://joydrop-iota.vercel.app). Releases are tagged (`v0.1.1`, `v0.1.2`, `v0.1.3`); see [CHANGELOG.md](CHANGELOG.md).
+Pushing to `main` deploys to production on Vercel (https://joydrop-iota.vercel.app). Releases are tagged (`v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`); see [CHANGELOG.md](CHANGELOG.md).
 
 ## Rollback
 

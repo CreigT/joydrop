@@ -2,6 +2,15 @@
 
 **Sponsored by CREIGNIFICENT LLC**
 
+## v0.1.4 — 2026-11-03
+
+### Fixed
+- "Send it" page: the text-message and email buttons and the shown link now contain the full card address (`https://…/card/<token>`) as soon as the page loads. Before, until the page's script finished loading, they held only `/card/<token>`, which would not open from a text or email.
+
+### Verified live (production database connected)
+- Migrations `20260711000100_initial` and `20261102120000_cards` applied by the production build.
+- Card create, send page, card page, hide/show, report, and sender delete work on the live site; daily cron with the secret returns `{"ok":true}`.
+
 ## v0.1.3 — 2026-11-02
 
 ### Added

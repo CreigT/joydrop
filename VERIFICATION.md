@@ -1,22 +1,28 @@
 # JoyDrop Truth Test & Operational Verification
 
 **Sponsored by CREIGNIFICENT LLC**  
-**Version:** v0.1.3  
-**Date:** 2026-11-02
+**Version:** v0.1.4  
+**Date:** 2026-11-03
 
-## Result: PASS for code, security, and full-flow checks on a real database; NOT YET LIVE for sign-ups
-- Lint, type check, 54 automated tests (including a full flow on a real Postgres database), and the production build pass.
-- Production (https://joydrop-iota.vercel.app) has the Firebase variables and `CRON_SECRET` set (checked by name only).
-  It does **not** have a database connected yet, so the landing page says "Sign-ups are not open yet" and the
-  data-backed pages and APIs return "temporarily unavailable". Connecting the database is a one-time step in the
-  Vercel dashboard (see "Go-live steps"); the next deploy then creates the tables automatically.
+## Result: PASS for everything that can be checked without a browser; human browser/phone checks still needed
+- Lint, type check, 55 automated tests (including full flows on a real Postgres database), and the production build pass.
+- Production (https://joydrop-iota.vercel.app) has a Neon Postgres database connected (2026-11-03). The production build
+  applied both migrations. Firebase variables and `CRON_SECRET` are set (checked by name only).
+- Live checks on 2026-11-03 (no browser, test data labelled TEST DATA and removed afterwards):
+  - All public pages load with the sponsor footer; no AI wording; sign-up and card forms are open.
+  - Card: create (303 to the private send page) → send page shows text, email, and copy buttons with the card link →
+    card page shows the message, `noindex`, no-referrer → hide (message no longer shown) → show → claim without sign-in 401 →
+    report (card 404 from then on) → sender delete works; wrong manage link 404; missing consent 400; overlong message 400.
+  - Daily cron with the Bearer secret → `{"ok":true}`; without it, with `?secret=`, or with a wrong one → 401.
+  - Signed out: erase, export, pause → 401; pause GET → 405; dashboard/onboarding/approve → redirect to sign-in;
+    unknown birthday/invite pages → 404; `/api/generate` → 404.
 - The AI speech feature was removed in v0.1.2. JoyDrop calls no AI services.
 - v0.1.3 adds sender-first birthday cards. You send the link from your phone; JoyDrop doesn't send texts or emails.
 
-## Automated Checks (v0.1.3)
+## Automated Checks (v0.1.4)
 - `npm run lint` — no warnings or errors
 - `npx tsc --noEmit` — no errors
-- `npm test` with `TEST_DATABASE_URL` set to a throwaway local Postgres 18 database — 54 passed (5 files)
+- `npm test` with `TEST_DATABASE_URL` set to a throwaway local Postgres 18 database — 55 passed (5 files)
   - `tests/flow.db.test.ts` (real database, sign-in simulated): opt in (login email wins over form email) → friend
     message → another login cannot approve (403) → owner approves → locked page returns no content and refuses guestbook
     entries → cron with the Bearer secret unlocks the page → approved message appears with no owner or friend email →
@@ -60,19 +66,18 @@
 
 The v0.1.1 claim changes are listed in CHANGELOG.md.
 
-## Go-live steps (need the project owner)
-1. [ ] Vercel dashboard → joydrop → Storage → Create Database → Neon (Free plan, no card) → connect to the joydrop project
-   for Production. This adds `DATABASE_URL` (and `DATABASE_URL_UNPOOLED`).
-2. [ ] Redeploy production (Deployments → latest → Redeploy). The build runs `prisma migrate deploy` before `next build`.
-3. [x] `CRON_SECRET` is set in Production (2026-11-02). Vercel Cron sends it as a Bearer token.
+## Go-live steps
+1. [x] Neon Free database connected to joydrop Production (2026-11-03).
+2. [x] Production redeployed; migrations applied by the build.
+3. [x] `CRON_SECRET` is set in Production. Vercel Cron sends it as a Bearer token.
 
 ## The 10 end-to-end steps
 | # | Step | Status |
 |---|---|---|
-| 1 | Database connected and migrations applied | Passed on a local throwaway database; production pending go-live step 1–2 |
-| 2 | `CRON_SECRET` set; cron rejects missing/wrong/query-string secrets | Set in production; rejection verified by tests and live |
+| 1 | Database connected and migrations applied | Passed live (2026-11-03) |
+| 2 | `CRON_SECRET` set; cron rejects missing/wrong/query-string secrets | Passed live (secret → `{"ok":true}`; others → 401) |
 | 3 | Sign in (Google, email/password) | Needs a human browser test (Firebase variables are present) |
-| 4 | Opt in with both consent boxes → account and page created | Passed on real database (simulated sign-in); live pending database |
+| 4 | Opt in with both consent boxes → account and page created | Passed on real database (simulated sign-in); live needs a signed-in browser |
 | 5 | Friend sends text (+ optional file) → stored | Text passed on real database; Firebase Storage upload needs a live test |
 | 6 | Owner approves a message (another login cannot) | Passed on real database |
 | 7 | Pause refuses new messages and stops unlock; resume works | Passed on real database |
@@ -83,10 +88,10 @@ The v0.1.1 claim changes are listed in CHANGELOG.md.
 ## Birthday card checks (v0.1.3)
 | Check | Status |
 |---|---|
-| Create card, share page, text/email/copy links | Passed on real database and unit tests; live pending database; the buttons opening Messages/email/share sheet need a human phone test |
-| Card page noindex, viewable immediately | Passed locally (page HTML checked); live pending database |
-| Hide / show / report / delete / claim rules | Passed on real database |
-| Sender delete | Passed on real database |
+| Create card, share page, text/email/copy links | Passed live; the buttons opening Messages/email/share sheet need a human phone test |
+| Card page noindex, viewable immediately | Passed live |
+| Hide / show / report / delete / claim rules | Passed live for hide, show, report, sender delete, signed-out claim 401; claiming while signed in needs a browser |
+| Sender delete | Passed live |
 | Card file upload to Firebase Storage | Needs a live test |
 
 ## Known Limitations
@@ -97,4 +102,4 @@ The v0.1.1 claim changes are listed in CHANGELOG.md.
 - Anyone holding an unclaimed card link can hide or delete it; the birthday person should claim it to lock it.
 - Files attached to deleted cards may remain in storage until cleaned up.
 
-Last updated: 2026-11-02
+Last updated: 2026-11-03

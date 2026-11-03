@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { hashManageToken, isWellFormedToken } from "@/lib/cards";
 import { hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
+import { originFromHeaders } from "@/lib/share";
 import { ShareButtons } from "../ShareButtons";
 
 export const metadata: Metadata = {
@@ -26,6 +28,7 @@ export default async function SendCardPage({ params }: { params: { manageToken: 
   }
 
   const removed = card.status === "reported";
+  const origin = requestOrigin();
 
   return (
     <main className="confetti-dots min-h-screen bg-bg px-5 py-10">
@@ -47,6 +50,7 @@ export default async function SendCardPage({ params }: { params: { manageToken: 
             <div className="mt-6">
               <ShareButtons
                 cardPath={`/card/${card.token}`}
+                initialOrigin={origin}
                 recipientName={card.recipientName}
                 senderName={card.senderName}
               />
@@ -66,4 +70,10 @@ export default async function SendCardPage({ params }: { params: { manageToken: 
       </section>
     </main>
   );
+}
+
+/** Site origin from the request, so the share links are complete before the page's script loads. */
+function requestOrigin() {
+  const h = headers();
+  return originFromHeaders((name) => h.get(name));
 }

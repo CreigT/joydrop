@@ -5,14 +5,16 @@ import { mailtoHref, shareText, smsHref } from "@/lib/share";
 
 export function ShareButtons({
   cardPath,
+  initialOrigin,
   recipientName,
   senderName
 }: {
   cardPath: string;
+  initialOrigin: string;
   recipientName: string;
   senderName: string;
 }) {
-  const [origin, setOrigin] = useState("");
+  const [origin, setOrigin] = useState(initialOrigin);
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
 

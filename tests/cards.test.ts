@@ -7,7 +7,7 @@ import {
   newCardToken,
   newManageToken
 } from "@/lib/cards";
-import { mailtoHref, shareText, smsHref } from "@/lib/share";
+import { mailtoHref, originFromHeaders, shareText, smsHref } from "@/lib/share";
 
 const session = vi.hoisted(() => ({ current: null as null | { uid: string } }));
 const db = vi.hoisted(() => ({
@@ -97,6 +97,16 @@ describe("card helpers", () => {
     expect(mail.startsWith("mailto:?subject=")).toBe(true);
     expect(mail).toContain(encodeURIComponent("Ana & Co"));
     expect(mail).not.toContain(" ");
+  });
+
+  it("builds the full site address for share links on the server", () => {
+    const h = (m: Record<string, string>) => (n: string) => m[n] ?? null;
+    expect(originFromHeaders(h({ "x-forwarded-host": "joydrop-iota.vercel.app", "x-forwarded-proto": "https" }))).toBe(
+      "https://joydrop-iota.vercel.app"
+    );
+    expect(originFromHeaders(h({ host: "localhost:3000", "x-forwarded-proto": "http" }))).toBe("http://localhost:3000");
+    expect(originFromHeaders(h({ host: "evil.test/<script>" }))).toBe("");
+    expect(originFromHeaders(h({}))).toBe("");
   });
 
   it("applies the access rules", () => {
