@@ -22,9 +22,9 @@
 ## v0.1.5 checks (forgot password, full share links)
 | Check | Status |
 |---|---|
-| Sign-in page shows "Forgot password?" | Pending live check |
-| Reset request for a made-up address shows the neutral message | Pending live check |
-| "You're in!" page shows full `https://` invite and Birthday Bridge links with Copy buttons | Pending live check |
+| Sign-in page shows "Forgot password?" | Passed live (2026-11-03, deployment of `7d5a0c7`) |
+| Reset request for a made-up address shows the neutral message | Passed live: `test-reset@example.invalid` → Firebase `sendOobCode` 200 → neutral message shown; empty email → "Type your email above, then tap Forgot password." |
+| "You're in!" page shows full `https://` invite and Birthday Bridge links with Copy buttons | Passed live: server HTML (before any script runs) has `https://joydrop-iota.vercel.app/invite/<id>` and `/birthday/<id>` links and 2 Copy buttons; no bare `/invite/` text |
 | Dashboard shows full `https://` links with Copy buttons | Covered by the same component and server origin; needs a signed-in browser to see live |
 | Reset email arrives and the new password works | Needs the account owner to test with their own email |
 | Unit tests (`tests/links-reset.test.tsx`, 6 tests) | Passed |
