@@ -29,8 +29,23 @@
 | Edit profile: validation (empty, too long, `<`/`>`, Feb 30, month 13), save, unlock date follows the birthday | Passed on real database |
 | Export lists sent cards; erase unlinks them and leaves them for the recipient | Passed on real database |
 | v0.1.5 code works with the new migration applied | Passed (v0.1.5 card and flow tests run against the migrated database) |
-| Preview deployment pages | See the preview check below |
+| Preview deployment pages | Passed (see the preview check below) |
 | Signed-in dashboard on the preview | Needs a human test (see limits) |
+
+### Preview check (2026-11-03, deployment of `f2805a5`)
+- Preview: https://joydrop-60dub16hj-creigterrence-8552s-projects.vercel.app — Ready. It is behind Vercel Deployment
+  Protection: opening it needs a Vercel login on the project's team. It was read through Vercel's own access for the
+  project; protection settings were not changed.
+- Signed out: `/dashboard` → sign-in page. Top bar shows Make a card and Sign in. Sponsor footer present.
+- `/`, `/send`, `/privacy` → 200 with the top bar and sponsor footer; `/send` shows the dashboard note.
+- `/send/<made-up token>` → 404 (the page reads the new `senderUid` column from the database without error).
+- Sign-in page shows "Sign in is not available right now." The preview has no `NEXT_PUBLIC_FIREBASE_*` variables (they
+  are set for Production only), so signing in on the preview does not work. The signed-in dashboard needs a human test
+  after that is set up, or after release.
+- Database: the preview uses the same Neon database as production. The preview build applied
+  `20261103120000_card_sender` to it ("All migrations have been successfully applied"). The change is additive; the live
+  v0.1.5 site still answers `/`, `/login`, `/send`, `/privacy` with 200, `/dashboard` with a redirect, and an unknown card
+  with 404 after it.
 
 ## v0.1.5 checks (forgot password, full share links)
 | Check | Status |

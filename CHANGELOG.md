@@ -23,6 +23,7 @@
 
 ### Database
 - New migration `20261103120000_card_sender`: adds a nullable `Card.senderUid` column and an index. Additive only; v0.1.5 works unchanged with it applied (checked by running the v0.1.5 tests against the migrated database).
+- The preview uses the production database, so the preview build already applied this migration there. The live v0.1.5 site was checked afterwards and works.
 
 ### Tests
 - `tests/dashboard.test.tsx` (9): status labels, profile validation, notices, top navigation, sign out, sign-in required, inline video.
