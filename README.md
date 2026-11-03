@@ -11,9 +11,10 @@ JoyDrop is a permission-first birthday page app. The birthday person signs in an
 - Opt-in (signed in) with explicit consent checkboxes
 - Firebase login with Google and email/password, with a "Forgot password?" option (Firebase sends the reset email; the page shows the same message whether or not an account exists)
 - Friend invite flow for text, voice, photo, video, and GIF contributions
-- Owner dashboard: review and approve messages (with attached media), invite link, pause/resume, download or erase data
+- Personal dashboard: profile (name, email, birthday, signed-in status) with "Edit profile"; one "Make a card" button; "Cards I sent" (preview, status, link with Copy/Text/Email, delete); "Cards I received" (photos and videos play on the page); "My birthday page" (invite and Birthday Bridge links, pause/resume, "Birthday messages from friends" to approve); download or erase data
+- Top navigation on every page: Dashboard, Make a card, Sign out (or Make a card, Sign in when signed out)
 - Birthday Bridge page with countdown, confetti, Memory Wall, guestbook, gift tracker (no money handled), keepsake PDF, and privacy controls (search engines, hide, delete content)
-- Birthday cards (no sign-in needed to make one): the sender writes a message, optionally attaches a file (up to 4 MB), and gets a private "Send it" page with text-message, email, copy-link, and share-sheet buttons that open the sender's own apps. Card links use a random 192-bit token and are hidden from search engines. The card can be viewed as soon as the link is opened. The birthday person can hide, report, or delete the card, or sign in and claim it; the sender can delete it from the private page.
+- Birthday cards (no sign-in needed to make one): the sender writes a message, optionally attaches a file (up to 4 MB), and gets a private "Send it" page with text-message, email, copy-link, and share-sheet buttons that open the sender's own apps. Card links use a random 192-bit token and are hidden from search engines. The card can be viewed as soon as the link is opened. The birthday person can hide, report, or delete the card, or sign in and claim it; the sender can delete it from the private page. Cards made while signed in show on the sender's dashboard; a card made earlier can be added from its private page ("Add to my dashboard").
 - Daily Vercel Cron route that unlocks pages once their unlock time has passed
 - Prisma/PostgreSQL schema with soft delete and data export/erase routes
 
@@ -69,7 +70,7 @@ Pick one:
    ```
 3. **Emergency stop:** pause the Vercel project, or remove the cron entry from `vercel.json` and rotate `CRON_SECRET`.
 
-v0.1.1 and v0.1.2 add no new migrations. v0.1.3 adds one migration that only creates a new `Card` table; rolling back the code leaves that table unused and needs no data changes.
+v0.1.1 and v0.1.2 add no new migrations. v0.1.3 adds one migration that only creates a new `Card` table; rolling back the code leaves that table unused and needs no data changes. v0.2.0 adds one migration that only adds a nullable `Card.senderUid` column and its index; v0.1.5 runs unchanged with it in place, so rolling back to v0.1.5 (`dcada8e`) needs no database change.
 
 ## Tests
 

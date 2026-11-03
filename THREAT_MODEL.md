@@ -78,6 +78,14 @@
 - **Password reset**: "Forgot password?" calls Firebase `sendPasswordResetEmail`. Risk: checking whether an email has an account. Control: one neutral message for sent and "no such user". Risk: reset-email flooding. Control: Firebase's own rate limit (`auth/too-many-requests`), shown as a plain message. JoyDrop stores nothing new.
 - **Share links**: invite and Birthday Bridge links are now full addresses built from the request host, which must match a plain host pattern (else the path is shown); the user id is URL-encoded.
 
+## Changes in v0.2.0 (personal dashboard)
+- **New data**: `Card.senderUid` links a card to the login that made it (when signed in) or that added it with the private manage link. It is used only to list the sender's own cards.
+- **Seeing or deleting someone else's sent cards**: every query filters on the verified login id; deleting by card id also requires `senderUid` to match (404 otherwise). Tested with a second login.
+- **Taking over a card via "Add to my dashboard"**: needs the 256-bit manage token and sign-in; a card already linked to another login is refused (409).
+- **Profile edits**: own account only; name and birthday validated; changing the birthday moves the unlock date only while the page is still locked.
+- **Erase**: also unlinks cards the user sent (the card stays for its recipient) and exports now list sent cards.
+- **Residual**: a sent card the recipient later reports shows as "Removed" to the sender; the sender still sees cards the recipient hid.
+
 ## Assumptions
 - Firebase Auth correctly verifies session cookies.
 - Vercel Cron is the only caller holding `CRON_SECRET`.

@@ -128,9 +128,12 @@ model Card {
   status          String   @default("active")
   /// Firebase uid of the birthday person once they claim the card by signing in.
   claimedByUid    String?
+  /// Firebase uid of the sender, when they were signed in or added the card to their dashboard.
+  senderUid       String?
   viewCount       Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([claimedByUid])
+  @@index([senderUid])
 }

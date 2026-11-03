@@ -25,7 +25,7 @@ export default function SendPage() {
           Write a message and add a photo, GIF, short video, or voice note if you like. The birthday
           person doesn&apos;t need an account. Next, you&apos;ll get a private link to send from your own
           phone or email. JoyDrop doesn&apos;t send texts or emails. The card can be viewed as soon as
-          the link is opened.
+          the link is opened. If you&apos;re signed in, the card also shows on your dashboard.
         </p>
 
         {!open ? (

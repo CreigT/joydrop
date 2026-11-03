@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { hashManageToken, isWellFormedToken } from "@/lib/cards";
 import { hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
+import { getCurrentFirebaseUser } from "@/lib/session";
 import { originFromHeaders } from "@/lib/share";
 import { ShareButtons } from "../ShareButtons";
 
@@ -28,6 +29,8 @@ export default async function SendCardPage({ params }: { params: { manageToken: 
   }
 
   const removed = card.status === "reported";
+  const session = await getCurrentFirebaseUser().catch(() => null);
+  const onMyDashboard = Boolean(session && card.senderUid === session.uid);
   const origin = requestOrigin();
 
   return (
@@ -54,6 +57,38 @@ export default async function SendCardPage({ params }: { params: { manageToken: 
                 recipientName={card.recipientName}
                 senderName={card.senderName}
               />
+            </div>
+            <div className="mt-6 rounded-2xl bg-bg/70 p-4 text-sm font-semibold text-[#463B52]">
+              {onMyDashboard ? (
+                <p>
+                  This card is on your{" "}
+                  <a className="font-black underline" href="/dashboard">
+                    dashboard
+                  </a>
+                  .
+                </p>
+              ) : session && !card.senderUid ? (
+                <form action="/api/cards/manage" method="post">
+                  <input name="manage_token" type="hidden" value={params.manageToken} />
+                  <input name="action" type="hidden" value="attach" />
+                  <p>Keep this card on your dashboard so you can find its link later.</p>
+                  <button
+                    className="mt-2 rounded-2xl bg-secondary px-4 py-2 text-xs font-black text-[#173B3A] shadow"
+                    type="submit"
+                  >
+                    Add to my dashboard
+                  </button>
+                </form>
+              ) : !session ? (
+                <p>
+                  <a className="font-black underline" href={`/login?next=/send/${params.manageToken}`}>
+                    Sign in
+                  </a>{" "}
+                  to keep this card on your dashboard.
+                </p>
+              ) : (
+                <p>This card is on another account&apos;s dashboard.</p>
+              )}
             </div>
             <p className="mt-6 text-xs font-semibold text-[#6A6074]">
               Bookmark this page. It is the only way to delete your card later, and it is private to you.

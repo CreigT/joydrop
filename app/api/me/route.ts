@@ -28,8 +28,15 @@ async function eraseOwnAccount() {
     data: { status: "deleted", message: "", mediaUrl: null, mediaType: null }
   });
 
+  // Cards this login sent are taken off its dashboard (the cards themselves stay
+  // with the birthday person; the sender can delete them first if they want).
+  const sent = await prisma.card.updateMany({
+    where: { senderUid: session.uid },
+    data: { senderUid: null }
+  });
+
   if (!existingUser) {
-    if (cards.count > 0) {
+    if (cards.count > 0 || sent.count > 0) {
       return Response.json({ erased: true });
     }
     return Response.json({ error: "User not found." }, { status: 404 });

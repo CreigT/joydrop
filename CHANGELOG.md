@@ -2,6 +2,35 @@
 
 **Sponsored by CREIGNIFICENT LLC**
 
+## v0.2.0 — 2026-11-03 (preview, not in production)
+
+### Added
+- Personal dashboard:
+  - Profile at the top: name, email, birthday, and "Signed in". "Edit profile" changes the name and birthday (validated); the email comes from the sign-in.
+  - One "Make a card" button.
+  - "Cards I sent": cards made while signed in, each with a photo/video preview, the recipient's name, its status (sent, claimed, hidden, or removed), the full card link with Copy, Text it, and Email it, and a delete option.
+  - "Cards I received": claimed cards with photos and videos that play on the page.
+  - "My birthday page": the invite and Birthday Bridge links, pause/resume, and "Birthday messages from friends" (was "Contributions") with an empty state that explains how messages arrive and how they differ from cards.
+  - Plain empty states for every section.
+- "Add to my dashboard" on a card's private "Send it" page, so a signed-in sender can keep a card they made before signing in.
+- Top navigation on every page: Dashboard, Make a card, Sign out (signed out: Make a card, Sign in).
+
+### Changed
+- Cards made while signed in are linked to the sender's login.
+- Export lists cards you sent; erase takes them off your dashboard (the card stays for its recipient).
+- Videos play inline on phones; photos load lazily.
+- Privacy, README, SECURITY, and THREAT_MODEL describe the dashboard and the sender link.
+
+### Database
+- New migration `20261103120000_card_sender`: adds a nullable `Card.senderUid` column and an index. Additive only; v0.1.5 works unchanged with it applied (checked by running the v0.1.5 tests against the migrated database).
+
+### Tests
+- `tests/dashboard.test.tsx` (9): status labels, profile validation, notices, top navigation, sign out, sign-in required, inline video.
+- `tests/flow.db.test.ts`: new real-database dashboard flow (sent/received lists, attach, 401/404/409 rules, own-only delete, profile edit and unlock date, export and erase).
+
+### Rollback
+- Previous good version: v0.1.5 (`dcada8e`). The migration does not need to be undone.
+
 ## v0.1.5 — 2026-11-03
 
 ### Added

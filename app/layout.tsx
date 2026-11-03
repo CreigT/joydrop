@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { TopNav } from "@/components/TopNav";
 
 export const metadata: Metadata = {
   title: "JoyDrop",
@@ -18,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-body">
+        <TopNav />
         {children}
         <footer className="bg-bg px-5 py-6 text-center text-xs font-semibold text-[#463B52]">
           <p>Sponsored by CREIGNIFICENT LLC</p>

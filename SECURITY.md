@@ -20,6 +20,10 @@ See the operational checklist used for this work:
 | `POST .../guestbook`, `POST .../gift` | Anyone, only on a visible, unlocked, unpaused page; validation and rate limit. |
 | `GET /api/birthday/[userId]`, page `/birthday/[userId]` | Anyone with the link; no content before unlock; no email or login id. |
 | `POST .../unlock` | Anyone; only unlocks when the time has passed and the page is not hidden and the user is not paused. |
+| `POST /api/profile` (v0.2.0) | Signed-in user; edits only their own not-erased account (401 / 404). Name 1–100 characters, no `<` or `>`; birthday must be a real month and day. |
+| `POST /api/cards/mine` (v0.2.0) | Signed-in sender; deletes only cards linked to their login (other cards 404); confirm box required. |
+| `POST /api/cards/manage` `action=attach` (v0.2.0) | Signed-in user holding the card's private manage link; refused (409) if the card is already linked to another login. |
+| `POST /api/session/logout` | Anyone; clears the session cookie. |
 | `GET /api/cron/daily` | Vercel Cron with `Authorization: Bearer CRON_SECRET` only. |
 
 ## Birthday Cards (v0.1.3)
@@ -28,6 +32,11 @@ See the operational checklist used for this work:
 - Before a card is claimed, anyone with its link can hide, show, or delete it; after it is claimed only the signed-in claimer can. Anyone with the link can report it (permanent).
 - JoyDrop does not send texts or emails for cards; the sender's own apps do.
 - "Forgot password?" calls Firebase `sendPasswordResetEmail`; Firebase sends the email. The page shows one neutral message whether or not the account exists, so it cannot be used to check who has an account. Firebase rate-limits repeat requests (`auth/too-many-requests`).
+
+## Personal Dashboard (v0.2.0)
+- The dashboard reads only rows matching the verified login id: the user's own account, cards where `senderUid` is their login, and cards they claimed.
+- The top navigation only checks whether a session cookie exists to choose links; it shows no account data.
+- Dashboard notices come from a fixed list, so the `?notice=` value is never shown as typed.
 
 ## External Services
 Firebase (sign-in, file storage), Vercel (hosting, cron), and a hosted Postgres database. As of v0.1.2 JoyDrop calls no AI services; the AI speech feature was removed.

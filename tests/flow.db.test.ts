@@ -14,6 +14,11 @@ vi.mock("@/lib/session", () => ({
   displayNameFromToken: () => "Friend"
 }));
 
+vi.mock("next/headers", () => ({
+  headers: () => new Headers({ "x-forwarded-host": "joydrop-iota.vercel.app", "x-forwarded-proto": "https" }),
+  cookies: () => ({ get: () => undefined })
+}));
+
 const run = TEST_DB ? describe : describe.skip;
 
 function form(fields: Record<string, string>, accept = "text/html") {
@@ -41,16 +46,17 @@ async function followRedirect(fn: () => Promise<unknown>) {
 run("JoyDrop flow on a real database", () => {
   const OWNER = { uid: "test_owner_uid", email: "joydrop-test-owner@example.com" };
   const OTHER = { uid: "test_other_uid", email: "joydrop-test-other@example.com" };
+  const SENDER = { uid: "test_sender_uid", email: "joydrop-test-sender@example.com" };
   let prisma: typeof import("@/lib/prisma").prisma;
   let userId = "";
 
   beforeAll(async () => {
     ({ prisma } = await import("@/lib/prisma"));
-    await prisma.user.deleteMany({ where: { firebaseUid: { in: [OWNER.uid, OTHER.uid] } } });
+    await prisma.user.deleteMany({ where: { firebaseUid: { in: [OWNER.uid, OTHER.uid, SENDER.uid] } } });
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({ where: { firebaseUid: { in: [OWNER.uid, OTHER.uid] } } });
+    await prisma.user.deleteMany({ where: { firebaseUid: { in: [OWNER.uid, OTHER.uid, SENDER.uid] } } });
     await prisma.card.deleteMany({ where: { senderName: "TEST DATA sender" } });
     await prisma.$disconnect();
   });
@@ -227,5 +233,117 @@ run("JoyDrop flow on a real database", () => {
     expect((await manage(form({ manage_token: three.manageToken, action: "delete" }, "application/json"))).status).toBe(200);
     expect(await prisma.card.findUniqueOrThrow({ where: { id: three.card.id } })).toMatchObject({ status: "deleted", message: "" });
     expect((await manage(form({ manage_token: three.manageToken, action: "delete" }, "application/json"))).status).toBe(404);
+  });
+  it("personal dashboard: sent and received cards, attach, own-only delete, profile edit", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { POST: createCard } = await import("@/app/api/cards/route");
+    const { POST: cardAction } = await import("@/app/api/cards/[token]/route");
+    const { POST: manage } = await import("@/app/api/cards/manage/route");
+    const { POST: mine } = await import("@/app/api/cards/mine/route");
+    const { POST: profile } = await import("@/app/api/profile/route");
+    const { POST: optin } = await import("@/app/api/optin/route");
+    const { GET: exportMe } = await import("@/app/api/me/export/route");
+    const { POST: erase } = await import("@/app/api/me/route");
+    const { default: Dashboard } = await import("@/app/dashboard/page");
+    const { hashManageToken } = await import("@/lib/cards");
+
+    const cardFields = { recipient_name: "TEST DATA recipient", sender_name: "TEST DATA sender", message: "TEST DATA message", permission_checkbox: "on" };
+    async function make(as: typeof SENDER | null) {
+      session.current = as;
+      const res = await createCard(form(cardFields));
+      const manageToken = res.headers.get("location")!.split("/send/")[1];
+      const card = await prisma.card.findUniqueOrThrow({ where: { manageTokenHash: hashManageToken(manageToken) } });
+      return { manageToken, card };
+    }
+    const render = async (notice?: string) =>
+      renderToStaticMarkup((await Dashboard({ searchParams: notice ? { notice } : {} })) as React.ReactElement);
+
+    // Signed-in sender: the card is linked to them.
+    const signedIn = await make(SENDER);
+    expect(signedIn.card.senderUid).toBe(SENDER.uid);
+
+    // Signed-out card: not linked; attach needs sign-in and the manage token.
+    const earlier = await make(null);
+    expect(earlier.card.senderUid).toBeNull();
+    session.current = null;
+    expect((await manage(form({ manage_token: earlier.manageToken, action: "attach" }, "application/json"))).status).toBe(401);
+    session.current = SENDER;
+    expect((await manage(form({ manage_token: "y".repeat(43), action: "attach" }, "application/json"))).status).toBe(404);
+    const attached = await manage(form({ manage_token: earlier.manageToken, action: "attach" }));
+    expect(attached.headers.get("location")).toBe("http://localhost/dashboard?notice=card_added");
+    expect((await prisma.card.findUniqueOrThrow({ where: { id: earlier.card.id } })).senderUid).toBe(SENDER.uid);
+    // Another login can't take it over.
+    session.current = OTHER;
+    expect((await manage(form({ manage_token: earlier.manageToken, action: "attach" }, "application/json"))).status).toBe(409);
+
+    // OTHER claims the signed-in card, so SENDER sees "claimed" and OTHER sees it under received.
+    expect((await cardAction(form({ action: "claim" }, "application/json"), { params: { token: signedIn.card.token } })).status).toBe(200);
+    const otherView = await render();
+    expect(otherView).toContain("Cards I received");
+    expect(otherView).toContain("From TEST DATA sender");
+    expect(otherView).not.toContain('data-testid="sent-card"');
+
+    session.current = SENDER;
+    let view = await render();
+    expect((view.match(/data-testid="sent-card"/g) ?? []).length).toBe(2);
+    expect(view).toContain("Claimed by the birthday person");
+    expect(view).toContain("Sent (not claimed yet)");
+    expect(view).toContain(`https://joydrop-iota.vercel.app/card/${signedIn.card.token}`);
+    expect(view).toContain("Make a card");
+    expect(view).toContain("You don&#x27;t have a birthday page yet");
+    expect(view).not.toContain("Contributions");
+
+    // Delete from the dashboard: confirm box required; only the sender's own cards.
+    expect((await mine(form({ card_id: earlier.card.id, action: "delete" }, "application/json"))).status).toBe(400);
+    session.current = OTHER;
+    expect((await mine(form({ card_id: earlier.card.id, action: "delete", confirm: "on" }, "application/json"))).status).toBe(404);
+    session.current = null;
+    expect((await mine(form({ card_id: earlier.card.id, action: "delete", confirm: "on" }, "application/json"))).status).toBe(401);
+    session.current = SENDER;
+    const deleted = await mine(form({ card_id: earlier.card.id, action: "delete", confirm: "on" }));
+    expect(deleted.headers.get("location")).toBe("http://localhost/dashboard?notice=card_deleted");
+    expect(await prisma.card.findUniqueOrThrow({ where: { id: earlier.card.id } })).toMatchObject({ status: "deleted", message: "" });
+    view = await render("card_deleted");
+    expect((view.match(/data-testid="sent-card"/g) ?? []).length).toBe(1);
+    expect(view).toContain("Card deleted.");
+
+    // Profile: needs a birthday page first, then validates and saves.
+    expect((await profile(form({ name: "New Name", month: "05", day: "10" }, "application/json"))).status).toBe(404);
+    await followRedirect(() =>
+      optin(form({ full_name: "Test Sender", month: "12", day: "20", consent_checkbox_1: "on", consent_checkbox_2: "on" }))
+    );
+    expect((await profile(form({ name: "", month: "05", day: "10" }))).headers.get("location")).toBe(
+      "http://localhost/dashboard?notice=profile_name"
+    );
+    expect((await profile(form({ name: "<b>x</b>", month: "05", day: "10" }, "application/json"))).status).toBe(400);
+    expect((await profile(form({ name: "Test Sender", month: "02", day: "30" }, "application/json"))).status).toBe(400);
+    expect((await profile(form({ name: "Test Sender", month: "13", day: "01" }, "application/json"))).status).toBe(400);
+    const saved = await profile(form({ name: "  Test   Sender Two ", month: "06", day: "15" }));
+    expect(saved.headers.get("location")).toBe("http://localhost/dashboard?notice=profile_saved");
+    const updated = await prisma.user.findUniqueOrThrow({ where: { firebaseUid: SENDER.uid }, include: { birthday_page: true } });
+    expect(updated).toMatchObject({ name: "Test Sender Two", birthday_mm_dd: "06-15" });
+    const { birthdayUnlockDate } = await import("@/lib/dates");
+    expect(updated.birthday_page?.unlockAt.toISOString()).toBe(birthdayUnlockDate("06-15").toISOString());
+    session.current = null;
+    expect((await profile(form({ name: "X", month: "01", day: "01" }, "application/json"))).status).toBe(401);
+    session.current = SENDER;
+    view = await render("profile_saved");
+    expect(view).toContain("Test Sender Two");
+    expect(view).toContain("June 15");
+    expect(view).toContain("Profile saved.");
+    expect(view).toContain("Birthday messages from friends");
+    expect(view).toContain(`https://joydrop-iota.vercel.app/invite/${updated.id}`);
+    expect(await render("<script>")).not.toContain("<script>");
+
+    // Export lists sent cards; erase takes them off the dashboard but leaves the card for its recipient.
+    const exported = await (await exportMe()).json();
+    expect(exported.sent_cards).toHaveLength(1);
+    expect((await erase(form({ confirm: "on" }, "application/json"))).status).toBe(200);
+    expect(await prisma.card.findUniqueOrThrow({ where: { id: signedIn.card.id } })).toMatchObject({
+      senderUid: null,
+      status: "active",
+      claimedByUid: OTHER.uid
+    });
+    await prisma.card.deleteMany({ where: { senderName: "TEST DATA sender" } });
   });
 });

@@ -39,7 +39,9 @@ export default function PrivacyPage() {
             receives anyone&apos;s phone number or email address for a card. Anyone with
             the card link can view it as soon as it is created. Card pages are hidden
             from search engines. The birthday person can hide, report, or delete the
-            card, or sign in and claim it so only they can change it. The sender can
+            card, or sign in and claim it so only they can change it. If the sender is signed
+            in when making a card, or adds it to their dashboard later, the card is linked to
+            their login so it shows on their dashboard; erasing your data removes that link. The sender can
             delete it from their private share page. When a card is deleted or
             reported, its message and file link are cleared from the database; an
             attached file may remain in storage until it is cleaned up.

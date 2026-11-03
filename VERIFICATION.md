@@ -1,11 +1,11 @@
 # JoyDrop Truth Test & Operational Verification
 
 **Sponsored by CREIGNIFICENT LLC**  
-**Version:** v0.1.5  
+**Version:** v0.2.0 (preview on branch `feature/personal-dashboard`; production is still v0.1.5)  
 **Date:** 2026-11-03
 
 ## Result: PASS for everything that can be checked without a browser; human browser/phone checks still needed
-- Lint, type check, 61 automated tests (including full flows on a real Postgres database), and the production build pass.
+- Lint, type check, 71 automated tests (including full flows on a real Postgres database), and the production build pass.
 - Production (https://joydrop-iota.vercel.app) has a Neon Postgres database connected (2026-11-03). The production build
   applied both migrations. Firebase variables and `CRON_SECRET` are set (checked by name only).
 - Live checks on 2026-11-03 (no browser, test data labelled TEST DATA and removed afterwards):
@@ -19,6 +19,19 @@
 - The AI speech feature was removed in v0.1.2. JoyDrop calls no AI services.
 - v0.1.3 adds sender-first birthday cards. You send the link from your phone; JoyDrop doesn't send texts or emails.
 
+## v0.2.0 checks (personal dashboard) — preview only
+| Check | Status |
+|---|---|
+| Dashboard shows profile, Make a card, Cards I sent, Cards I received, My birthday page, Your data | Passed on real database (rendered with simulated sign-in); phone-width layout checked from a local render |
+| Only the signed-in user's sent and received cards are listed; another login sees none of them | Passed on real database |
+| Delete a sent card from the dashboard: confirm required, own cards only (other login 404, signed out 401) | Passed on real database |
+| "Add to my dashboard": needs sign-in (401) and the manage link; another login refused (409) | Passed on real database |
+| Edit profile: validation (empty, too long, `<`/`>`, Feb 30, month 13), save, unlock date follows the birthday | Passed on real database |
+| Export lists sent cards; erase unlinks them and leaves them for the recipient | Passed on real database |
+| v0.1.5 code works with the new migration applied | Passed (v0.1.5 card and flow tests run against the migrated database) |
+| Preview deployment pages | See the preview check below |
+| Signed-in dashboard on the preview | Needs a human test (see limits) |
+
 ## v0.1.5 checks (forgot password, full share links)
 | Check | Status |
 |---|---|
@@ -31,10 +44,10 @@
 
 Rollback: previous good version v0.1.4 (`b63b3de`).
 
-## Automated Checks (v0.1.5)
+## Automated Checks (v0.2.0)
 - `npm run lint` — no warnings or errors
 - `npx tsc --noEmit` — no errors
-- `npm test` with `TEST_DATABASE_URL` set to a throwaway local Postgres 18 database — 61 passed (6 files)
+- `npm test` with `TEST_DATABASE_URL` set to a throwaway local Postgres 18 database — 71 passed (7 files)
   - `tests/flow.db.test.ts` (real database, sign-in simulated): opt in (login email wins over form email) → friend
     message → another login cannot approve (403) → owner approves → locked page returns no content and refuses guestbook
     entries → cron with the Bearer secret unlocks the page → approved message appears with no owner or friend email →
@@ -49,6 +62,9 @@ Rollback: previous good version v0.1.4 (`b63b3de`).
     guestbook, public JSON, cron (rejects `?secret=` and wrong tokens; unlocks without a speech)
   - `tests/input.test.ts`: safe login redirect, input validation, page-open rule, Pacific Time unlock dates
   - `tests/validation.test.ts`: upload size/MIME and rate limit
+  - `tests/dashboard.test.tsx`: sent-card status labels, profile validation, fixed notice list, top navigation signed in/out,
+    sign out clears the cookie, new endpoints return 401 when signed out, inline video
+  - `tests/flow.db.test.ts` dashboard flow: see "v0.2.0 checks" above
   - `tests/links-reset.test.tsx`: full https links and Copy buttons on the "You're in!" page, user id escaping, neutral
     password reset message, reset error messages
 - `npx prisma migrate diff` between the migrated database and `schema.prisma` — no difference

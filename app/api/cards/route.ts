@@ -3,6 +3,7 @@ import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { clientIp, seeOther } from "@/lib/http";
 import { tooLong } from "@/lib/input";
 import { prisma } from "@/lib/prisma";
+import { getCurrentFirebaseUser } from "@/lib/session";
 import { uploadContributionFile } from "@/lib/storage";
 import { checkRateLimit, validateContributionFile } from "@/lib/validation";
 
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
     }
   }
 
+  // Signed in is optional. When signed in, the card also shows on the sender's dashboard.
+  const session = await getCurrentFirebaseUser().catch(() => null);
+
   const token = newCardToken();
   const manageToken = newManageToken();
   const mediaUrl = file ? await uploadContributionFile(file, `cards/${token}`, mediaKind ?? "file") : null;
@@ -71,7 +75,8 @@ export async function POST(request: Request) {
       senderName,
       message,
       mediaUrl,
-      mediaType: mediaUrl ? mediaKind : null
+      mediaType: mediaUrl ? mediaKind : null,
+      senderUid: session?.uid ?? null
     }
   });
 
