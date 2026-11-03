@@ -2,6 +2,24 @@
 
 **Sponsored by CREIGNIFICENT LLC**
 
+## v0.1.5 — 2026-11-03
+
+### Added
+- Sign-in page: "Forgot password?" for email/password accounts. It asks Firebase Authentication to email a reset link to the typed address. The page shows the same message whether or not an account exists ("If an account exists for that email, a reset link is on its way. Check spam too."), and plain messages for an invalid email, too many tries, or no connection.
+- Copy buttons next to the invite link and Birthday Bridge link on the "You're in!" page and the dashboard.
+
+### Fixed
+- The "You're in!" page and the dashboard showed `/invite/<id>` and `/birthday/<id>` without the site address, so the links would not open when shared. They now show the full `https://…` address from the first page load (same approach as the v0.1.4 "Send it" fix).
+
+### Changed
+- README, privacy, terms, and SECURITY now say the only email connected to JoyDrop is the password reset email sent by the sign-in provider.
+
+### Tests
+- `tests/links-reset.test.tsx`: full links and Copy buttons on the "You're in!" page, user id escaping, neutral reset message, reset error messages, email check.
+
+### Rollback
+- Previous good version: v0.1.4 (`b63b3de`). Roll back by promoting that deployment in Vercel or reverting this commit.
+
 ## v0.1.4 — 2026-11-03
 
 ### Fixed

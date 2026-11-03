@@ -1,17 +1,18 @@
-import Link from "next/link";
+import { headers } from "next/headers";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
+import { CopyLink } from "@/components/CopyLink";
+import { originFromHeaders } from "@/lib/share";
 
 export default function Thanks({
   searchParams
 }: {
   searchParams: { user_id?: string };
 }) {
-  const invitePath = searchParams.user_id
-    ? `/invite/${searchParams.user_id}`
-    : "/invite";
-  const birthdayPath = searchParams.user_id
-    ? `/birthday/${searchParams.user_id}`
-    : "/birthday";
+  const id = searchParams.user_id ? encodeURIComponent(searchParams.user_id) : "";
+  const invitePath = id ? `/invite/${id}` : "/invite";
+  const birthdayPath = id ? `/birthday/${id}` : "/birthday";
+  const h = headers();
+  const origin = originFromHeaders((name) => h.get(name));
 
   return (
     <main className="confetti-dots flex min-h-screen items-center justify-center bg-bg px-5 py-10">
@@ -27,18 +28,25 @@ export default function Thanks({
           Friends use the first link to send messages. The second link is your
           Birthday Bridge page. You can find both on your dashboard.
         </p>
-        <Link
-          className="mt-7 block rounded-2xl bg-secondary px-5 py-3 font-heading font-black text-[#173B3A] shadow-lg shadow-secondary/30"
-          href={invitePath}
-        >
-          {invitePath}
-        </Link>
-        <Link
-          className="mt-3 block rounded-2xl bg-accent px-5 py-3 font-heading font-black text-[#30273A] shadow-lg shadow-accent/30"
-          href={birthdayPath}
-        >
-          {birthdayPath}
-        </Link>
+        <div className="mt-7 rounded-2xl bg-secondary px-5 py-3 text-left shadow-lg shadow-secondary/30">
+          <p className="text-xs font-black uppercase text-[#173B3A]">Invite link for friends</p>
+          <CopyLink
+            initialOrigin={origin}
+            linkClassName="break-all font-heading text-sm font-black text-[#173B3A] underline"
+            path={invitePath}
+          />
+        </div>
+        <div className="mt-3 rounded-2xl bg-accent px-5 py-3 text-left shadow-lg shadow-accent/30">
+          <p className="text-xs font-black uppercase text-[#30273A]">Your Birthday Bridge page</p>
+          <CopyLink
+            initialOrigin={origin}
+            linkClassName="break-all font-heading text-sm font-black text-[#30273A] underline"
+            path={birthdayPath}
+          />
+        </div>
+        <a className="mt-5 inline-block text-sm font-bold text-[#463B52] underline" href="/dashboard">
+          Go to your dashboard
+        </a>
       </section>
     </main>
   );

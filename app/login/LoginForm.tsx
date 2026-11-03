@@ -4,17 +4,15 @@ import { safeNextPath } from "@/lib/safe-redirect";
 import { useState } from "react";
 import {
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup
 } from "firebase/auth";
 import { auth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
+import { isValidEmail, resetResult } from "@/lib/password-reset";
 
 const fieldClass =
   "w-full rounded-2xl border border-white/70 bg-white/85 px-4 py-3 text-sm shadow-sm outline-none transition focus:border-secondary focus:ring-4 focus:ring-secondary/20";
-
-function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
 
 function signInErrorMessage(error: unknown) {
   if (!(error instanceof Error)) {
@@ -53,6 +51,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState("");
 
   async function setSession(token: string) {
     const response = await fetch("/api/session", {
@@ -78,6 +77,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
 
     setLoading(true);
     setError("");
+    setNotice("");
 
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -86,6 +86,37 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       setError(err instanceof Error ? err.message : "Google sign in failed.");
       setLoading(false);
     }
+  }
+
+  async function handleForgotPassword() {
+    setNotice("");
+    if (!auth) {
+      setError("Firebase is not configured yet.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setError("Type your email above, then tap Forgot password.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    let failure: unknown = null;
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+    } catch (err) {
+      failure = err;
+    }
+
+    const result = resetResult(failure);
+    if (result.kind === "sent") {
+      setNotice(result.message);
+    } else {
+      setError(result.message);
+    }
+    setLoading(false);
   }
 
   async function handleEmail(mode: "signin" | "signup") {
@@ -168,7 +199,29 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
             Email Sign Up
           </button>
         </div>
+        <button
+          className="text-sm font-bold text-[#463B52] underline disabled:opacity-60"
+          disabled={loading || !isFirebaseConfigured}
+          onClick={handleForgotPassword}
+          type="button"
+        >
+          Forgot password?
+        </button>
+        <p className="text-xs font-semibold text-[#6A6074]">
+          Type your email above, then tap Forgot password. The reset email comes from our sign-in
+          provider (Firebase) and lets you choose a new password.
+        </p>
       </div>
+
+      {notice ? (
+        <p
+          aria-live="polite"
+          className="rounded-2xl bg-secondary/20 p-3 text-sm font-semibold text-[#173B3A]"
+          data-testid="reset-notice"
+        >
+          {notice}
+        </p>
+      ) : null}
 
       {error ? (
         <p className="rounded-2xl bg-primary/10 p-3 text-sm font-semibold text-[#8E3154]">

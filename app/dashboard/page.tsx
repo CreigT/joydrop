@@ -1,4 +1,7 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { CopyLink } from "@/components/CopyLink";
+import { originFromHeaders } from "@/lib/share";
 import { hasDatabaseUrl } from "@/lib/database";
 import { formatBirthday } from "@/lib/dates";
 
@@ -50,6 +53,8 @@ export default async function DashboardPage() {
   });
 
   const users = currentUser ? [currentUser] : [];
+  const h = headers();
+  const origin = originFromHeaders((name) => h.get(name));
 
   const receivedCards = await prisma.card.findMany({
     where: { claimedByUid: session.uid, status: { in: ["active", "hidden"] } },
@@ -101,15 +106,11 @@ export default async function DashboardPage() {
                     <div className="mt-4 space-y-2 text-sm font-semibold text-[#463B52]">
                       <p>
                         Your invite link to share with friends:{" "}
-                        <a className="break-all underline" href={`/invite/${user.id}`}>
-                          /invite/{user.id}
-                        </a>
+                        <CopyLink initialOrigin={origin} path={`/invite/${user.id}`} />
                       </p>
                       <p>
                         Your Birthday Bridge page:{" "}
-                        <a className="break-all underline" href={`/birthday/${user.id}`}>
-                          /birthday/{user.id}
-                        </a>
+                        <CopyLink initialOrigin={origin} path={`/birthday/${user.id}`} />
                       </p>
                       <p>
                         It unlocks at midnight Pacific Time on your birthday and shows

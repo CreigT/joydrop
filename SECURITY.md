@@ -27,6 +27,7 @@ See the operational checklist used for this work:
 - Card link: random 192-bit token. Sender manage link: random 256-bit token, stored only as a SHA-256 hash.
 - Before a card is claimed, anyone with its link can hide, show, or delete it; after it is claimed only the signed-in claimer can. Anyone with the link can report it (permanent).
 - JoyDrop does not send texts or emails for cards; the sender's own apps do.
+- "Forgot password?" calls Firebase `sendPasswordResetEmail`; Firebase sends the email. The page shows one neutral message whether or not the account exists, so it cannot be used to check who has an account. Firebase rate-limits repeat requests (`auth/too-many-requests`).
 
 ## External Services
 Firebase (sign-in, file storage), Vercel (hosting, cron), and a hosted Postgres database. As of v0.1.2 JoyDrop calls no AI services; the AI speech feature was removed.

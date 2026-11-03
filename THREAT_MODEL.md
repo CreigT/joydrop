@@ -74,6 +74,10 @@
 - Files attached to deleted cards may remain in storage until cleaned up
 - No automated alerting on anomalous activity
 
+## Changes in v0.1.5
+- **Password reset**: "Forgot password?" calls Firebase `sendPasswordResetEmail`. Risk: checking whether an email has an account. Control: one neutral message for sent and "no such user". Risk: reset-email flooding. Control: Firebase's own rate limit (`auth/too-many-requests`), shown as a plain message. JoyDrop stores nothing new.
+- **Share links**: invite and Birthday Bridge links are now full addresses built from the request host, which must match a plain host pattern (else the path is shown); the user id is URL-encoded.
+
 ## Assumptions
 - Firebase Auth correctly verifies session cookies.
 - Vercel Cron is the only caller holding `CRON_SECRET`.

@@ -1,11 +1,11 @@
 # JoyDrop Truth Test & Operational Verification
 
 **Sponsored by CREIGNIFICENT LLC**  
-**Version:** v0.1.4  
+**Version:** v0.1.5  
 **Date:** 2026-11-03
 
 ## Result: PASS for everything that can be checked without a browser; human browser/phone checks still needed
-- Lint, type check, 55 automated tests (including full flows on a real Postgres database), and the production build pass.
+- Lint, type check, 61 automated tests (including full flows on a real Postgres database), and the production build pass.
 - Production (https://joydrop-iota.vercel.app) has a Neon Postgres database connected (2026-11-03). The production build
   applied both migrations. Firebase variables and `CRON_SECRET` are set (checked by name only).
 - Live checks on 2026-11-03 (no browser, test data labelled TEST DATA and removed afterwards):
@@ -19,10 +19,22 @@
 - The AI speech feature was removed in v0.1.2. JoyDrop calls no AI services.
 - v0.1.3 adds sender-first birthday cards. You send the link from your phone; JoyDrop doesn't send texts or emails.
 
-## Automated Checks (v0.1.4)
+## v0.1.5 checks (forgot password, full share links)
+| Check | Status |
+|---|---|
+| Sign-in page shows "Forgot password?" | Pending live check |
+| Reset request for a made-up address shows the neutral message | Pending live check |
+| "You're in!" page shows full `https://` invite and Birthday Bridge links with Copy buttons | Pending live check |
+| Dashboard shows full `https://` links with Copy buttons | Covered by the same component and server origin; needs a signed-in browser to see live |
+| Reset email arrives and the new password works | Needs the account owner to test with their own email |
+| Unit tests (`tests/links-reset.test.tsx`, 6 tests) | Passed |
+
+Rollback: previous good version v0.1.4 (`b63b3de`).
+
+## Automated Checks (v0.1.5)
 - `npm run lint` — no warnings or errors
 - `npx tsc --noEmit` — no errors
-- `npm test` with `TEST_DATABASE_URL` set to a throwaway local Postgres 18 database — 55 passed (5 files)
+- `npm test` with `TEST_DATABASE_URL` set to a throwaway local Postgres 18 database — 61 passed (6 files)
   - `tests/flow.db.test.ts` (real database, sign-in simulated): opt in (login email wins over form email) → friend
     message → another login cannot approve (403) → owner approves → locked page returns no content and refuses guestbook
     entries → cron with the Bearer secret unlocks the page → approved message appears with no owner or friend email →
@@ -37,6 +49,8 @@
     guestbook, public JSON, cron (rejects `?secret=` and wrong tokens; unlocks without a speech)
   - `tests/input.test.ts`: safe login redirect, input validation, page-open rule, Pacific Time unlock dates
   - `tests/validation.test.ts`: upload size/MIME and rate limit
+  - `tests/links-reset.test.tsx`: full https links and Copy buttons on the "You're in!" page, user id escaping, neutral
+    password reset message, reset error messages
 - `npx prisma migrate diff` between the migrated database and `schema.prisma` — no difference
 - `npm run build` — succeeds (skips migrations when no database is configured)
 
@@ -93,6 +107,14 @@ The v0.1.1 claim changes are listed in CHANGELOG.md.
 | Hide / show / report / delete / claim rules | Passed live for hide, show, report, sender delete, signed-out claim 401; claiming while signed in needs a browser |
 | Sender delete | Passed live |
 | Card file upload to Firebase Storage | Needs a live test |
+
+## Public Claims Changed in v0.1.5
+| Where | Old | New |
+|---|---|---|
+| README | "JoyDrop does not send email or text messages" | "...except the password reset email that the sign-in provider (Firebase Authentication) sends when someone taps "Forgot password?"" |
+| Terms | "JoyDrop does not send email or text messages" | "...except that if you tap "Forgot password?" our sign-in provider (Firebase) emails you a password reset link" |
+| Privacy | (none) | New "Password reset" paragraph |
+| Sign-in page | (none) | "Forgot password?" and the neutral reset message |
 
 ## Known Limitations
 - Unlock time is midnight Pacific Time for everyone; the app does not ask for a time zone yet.

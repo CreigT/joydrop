@@ -44,6 +44,12 @@ export default function PrivacyPage() {
             reported, its message and file link are cleared from the database; an
             attached file may remain in storage until it is cleaned up.
           </p>
+          <p>
+            <strong>Password reset.</strong> If you tap &quot;Forgot password?&quot; on the
+            sign-in page, the email you type is sent to our sign-in provider (Firebase
+            Authentication), which emails a reset link to that address if it has an
+            account. This is the only email connected to JoyDrop.
+          </p>
           <p>We don&apos;t sell your data.</p>
         </div>
       </section>

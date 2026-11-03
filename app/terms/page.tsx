@@ -13,7 +13,7 @@ export default function TermsPage() {
           </p>
           <p>
             Messages appear on the Birthday Bridge page only after the birthday
-            person approves them, and only once the page unlocks. JoyDrop does not send email or text messages, and the gift
+            person approves them, and only once the page unlocks. JoyDrop does not send email or text messages, except that if you tap &quot;Forgot password?&quot; our sign-in provider (Firebase) emails you a password reset link. The gift
             tracker does not handle money.
           </p>
           <p>

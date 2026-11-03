@@ -22,3 +22,8 @@ export function originFromHeaders(get: (name: string) => string | null) {
   const proto = (get("x-forwarded-proto") ?? "").split(",")[0].trim() === "http" ? "http" : "https";
   return `${proto}://${host}`;
 }
+
+/** Full link for a site path, e.g. "https://host/invite/abc". Falls back to the path when the origin is unknown. */
+export function absoluteUrl(origin: string, path: string) {
+  return origin ? `${origin}${path}` : path;
+}

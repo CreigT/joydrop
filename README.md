@@ -2,14 +2,14 @@
 
 **Sponsored by CREIGNIFICENT LLC**
 
-JoyDrop is a permission-first birthday page app. The birthday person signs in and opts in, shares a personal invite link, and friends send messages and media through it. The birthday person approves which messages to use, and their Birthday Bridge page unlocks at midnight Pacific Time on their birthday and shows the approved messages. Anyone can also make a one-off birthday card for a friend who hasn't signed up and send the link from their own phone or email. JoyDrop does not send email or text messages and does not use AI services.
+JoyDrop is a permission-first birthday page app. The birthday person signs in and opts in, shares a personal invite link, and friends send messages and media through it. The birthday person approves which messages to use, and their Birthday Bridge page unlocks at midnight Pacific Time on their birthday and shows the approved messages. Anyone can also make a one-off birthday card for a friend who hasn't signed up and send the link from their own phone or email. JoyDrop does not send email or text messages, except the password reset email that the sign-in provider (Firebase Authentication) sends when someone taps "Forgot password?". It does not use AI services.
 
 **Status (v0.1.4):** see [VERIFICATION.md](VERIFICATION.md) for what has and has not been verified on the live site.
 
 ## What It Does
 
 - Opt-in (signed in) with explicit consent checkboxes
-- Firebase login with Google and email/password
+- Firebase login with Google and email/password, with a "Forgot password?" option (Firebase sends the reset email; the page shows the same message whether or not an account exists)
 - Friend invite flow for text, voice, photo, video, and GIF contributions
 - Owner dashboard: review and approve messages (with attached media), invite link, pause/resume, download or erase data
 - Birthday Bridge page with countdown, confetti, Memory Wall, guestbook, gift tracker (no money handled), keepsake PDF, and privacy controls (search engines, hide, delete content)
