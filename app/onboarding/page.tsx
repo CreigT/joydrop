@@ -42,7 +42,10 @@ export default async function OnboardingPage() {
               required
               type="email"
             />
-          </label>
+            <span className="mt-1 block text-xs font-normal text-gray-500">
+                  We use the email on your sign-in account when it has one.
+                </span>
+              </label>
           <label className="block text-sm font-medium text-[#30273A]">
             Birthday
             <div className="mt-2 flex gap-2">
@@ -110,7 +113,7 @@ export default async function OnboardingPage() {
               required
               type="checkbox"
             />
-            Friends can add me to their surprise list
+            Friends I share my invite link with can send me birthday messages
           </label>
           <button
             className="w-full rounded-2xl bg-primary px-5 py-3 font-heading font-black text-white shadow-lg shadow-primary/30"

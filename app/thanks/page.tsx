@@ -21,8 +21,12 @@ export default function Thanks({
           JoyDrop
         </p>
         <h1 className="font-heading text-3xl font-black text-[#30273A] sm:text-5xl">
-          You&apos;re in! Want to invite friends to surprise you?
+          You&apos;re in! Share your invite link with friends.
         </h1>
+        <p className="mt-4 text-sm font-semibold text-[#463B52]">
+          Friends use the first link to send messages. The second link is your
+          Birthday Bridge page. You can find both on your dashboard.
+        </p>
         <Link
           className="mt-7 block rounded-2xl bg-secondary px-5 py-3 font-heading font-black text-[#173B3A] shadow-lg shadow-secondary/30"
           href={invitePath}

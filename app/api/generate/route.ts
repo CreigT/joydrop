@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
 import { createBirthdayScript, createVoiceAudio } from "@/lib/ai";
 import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { scheduledBirthdayDate } from "@/lib/dates";
+import { seeOther } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 
@@ -40,8 +40,23 @@ export async function POST(request: Request) {
     return Response.json({ error: "User not found or access denied." }, { status: 403 });
   }
 
-  const scriptText = await createBirthdayScript(user.name, user.contributions);
-  const audioUrl = await createVoiceAudio(scriptText);
+  if (user.contributions.length === 0) {
+    return seeOther(request, "/dashboard?error=no_approved_messages");
+  }
+
+  let scriptText: string;
+  let audioUrl: string;
+  try {
+    scriptText = await createBirthdayScript(user.name, user.contributions);
+    audioUrl = await createVoiceAudio(scriptText);
+  } catch (error) {
+    console.error("JoyDrop speech generation failed", error instanceof Error ? error.message : error);
+    return seeOther(request, "/dashboard?error=ai_unavailable");
+  }
+
+  if (!scriptText) {
+    return seeOther(request, "/dashboard?error=ai_unavailable");
+  }
 
   const surprise = await prisma.surprise.create({
     data: {
@@ -73,5 +88,5 @@ export async function POST(request: Request) {
     }
   });
 
-  redirect("/dashboard");
+  return seeOther(request, "/dashboard");
 }

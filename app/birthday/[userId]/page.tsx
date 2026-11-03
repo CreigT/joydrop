@@ -1,8 +1,26 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { isPageOpen, isSurprisePublishable } from "@/lib/birthday-page";
 import { hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 import { BirthdayBridge } from "./BirthdayBridge";
+
+export async function generateMetadata({
+  params
+}: {
+  params: { userId: string };
+}): Promise<Metadata> {
+  // Pages stay out of search engines unless the owner turns on "Allow search engines".
+  if (!hasDatabaseUrl()) {
+    return { robots: { index: false, follow: false } };
+  }
+  const page = await prisma.birthdayPage
+    .findUnique({ where: { userId: params.userId } })
+    .catch(() => null);
+  const indexable = Boolean(page?.isPublic && !page.soft_delete);
+  return { robots: { index: indexable, follow: indexable } };
+}
 
 export default async function BirthdayPage({
   params
@@ -13,22 +31,19 @@ export default async function BirthdayPage({
     notFound();
   }
 
-  const page = await prisma.birthdayPage.update({
-    where: {
-      userId: params.userId
-    },
-    data: {
-      viewCount: {
-        increment: 1
+  const page = await prisma.birthdayPage
+    .findUnique({
+      where: {
+        userId: params.userId
+      },
+      include: {
+        user: true,
+        surprise: true
       }
-    },
-    include: {
-      user: true,
-      surprise: true
-    }
-  }).catch(() => null);
+    })
+    .catch(() => null);
 
-  if (!page || page.soft_delete || page.user.soft_delete) {
+  if (!page || page.user.soft_delete) {
     notFound();
   }
 
@@ -37,7 +52,21 @@ export default async function BirthdayPage({
     firebaseUser?.uid && page.user.firebaseUid === firebaseUser.uid
   );
 
-  const [contributions, guestbook, gifts] = await Promise.all([
+  // A paused (hidden) page is only visible to its owner.
+  if (page.soft_delete && !isOwner) {
+    notFound();
+  }
+
+  if (!isOwner) {
+    await prisma.birthdayPage
+      .update({ where: { id: page.id }, data: { viewCount: { increment: 1 } } })
+      .catch(() => null);
+  }
+
+  // Before the unlock time, nobody (including the owner) receives the page content.
+  const open = isPageOpen(page);
+
+  const [contributions, guestbook, gifts] = open ? await Promise.all([
     prisma.contribution.findMany({
       where: {
         user_id: page.userId,
@@ -66,7 +95,7 @@ export default async function BirthdayPage({
         created_at: "desc"
       }
     })
-  ]);
+  ]) : [[], [], []];
 
   return (
     <BirthdayBridge
@@ -98,13 +127,14 @@ export default async function BirthdayPage({
         id: page.id,
         userId: page.userId,
         unlockAt: page.unlockAt.toISOString(),
-        isLocked: page.isLocked,
+        isLocked: !open,
         isPublic: page.isPublic,
+        isHidden: page.soft_delete,
         viewCount: page.viewCount,
         isOwner
       }}
       surprise={
-        page.surprise
+        open && isSurprisePublishable(page.surprise) && page.surprise
           ? {
               script_text: page.surprise.script_text,
               audio_url: page.surprise.audio_url,

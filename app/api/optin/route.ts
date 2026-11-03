@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { birthdayUnlockDate } from "@/lib/dates";
+import { isValidBirthdayMmDd, isValidEmail, LIMITS, tooLong } from "@/lib/input";
 import { prisma } from "@/lib/prisma";
 import { displayNameFromToken, getCurrentFirebaseUser } from "@/lib/session";
 
@@ -17,7 +18,9 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const name = String(formData.get("full_name") ?? "").trim();
-  const email = String(formData.get("email") ?? firebaseUser.email ?? "")
+  // Use the email from the signed-in account when it has one, so nobody can
+  // register a JoyDrop profile under someone else's email address.
+  const email = String(firebaseUser.email ?? formData.get("email") ?? "")
     .trim()
     .toLowerCase();
   const month = String(formData.get("month") ?? "").trim();
@@ -28,6 +31,18 @@ export async function POST(request: Request) {
 
   if (!name || !email || !birthday || !consentOne || !consentTwo) {
     return Response.json({ error: "Missing required opt-in fields." }, { status: 400 });
+  }
+
+  if (tooLong(name, LIMITS.name) || !isValidEmail(email) || !isValidBirthdayMmDd(birthday)) {
+    return Response.json({ error: "Check your name, email, and birthday." }, { status: 400 });
+  }
+
+  const emailOwner = await prisma.user.findUnique({ where: { email } });
+  if (emailOwner && emailOwner.firebaseUid !== firebaseUser.uid) {
+    return Response.json(
+      { error: "That email is already linked to a different JoyDrop login." },
+      { status: 409 }
+    );
   }
 
   const user = await prisma.user.upsert({

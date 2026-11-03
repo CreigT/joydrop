@@ -40,6 +40,7 @@ type Props = {
     unlockAt: string;
     isLocked: boolean;
     isPublic: boolean;
+    isHidden: boolean;
     viewCount: number;
     isOwner: boolean;
   };
@@ -88,7 +89,8 @@ export function BirthdayBridge({
   const [countdown, setCountdown] = useState(() => timeLeft(page.unlockAt));
   const [selected, setSelected] = useState<Contribution | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
-  const unlocked = !page.isLocked || countdown.diff === 0;
+  const unlocked = !page.isLocked;
+  const reachedUnlockTime = countdown.diff === 0;
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -102,11 +104,12 @@ export function BirthdayBridge({
       contributions
         .filter((contribution) => contribution.type === "photo")
         .slice(0, 8)
-        .map((contribution, index) => ({
-          label: `Age ${8 + index}: Favorite moment with ${user.name}`,
-          by: contribution.contributor_name
+        .map((contribution) => ({
+          id: contribution.id,
+          label: `Photo from ${contribution.contributor_name}`,
+          by: relativeTime(contribution.created_at)
         })),
-    [contributions, user.name]
+    [contributions]
   );
 
   return (
@@ -143,10 +146,18 @@ export function BirthdayBridge({
       </section>
 
       <div className="relative mx-auto grid max-w-6xl gap-8 px-5 py-8">
+        {page.isOwner && page.isHidden ? (
+          <p className="rounded-2xl bg-accent/60 p-4 text-sm font-semibold text-[#30273A]">
+            This page is hidden. Only you can see it. Use &quot;Show this page
+            again&quot; below to make it visible to visitors.
+          </p>
+        ) : null}
         {!unlocked ? (
           <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-center bg-bg/35 pt-20 backdrop-blur-sm">
             <div className="rounded-2xl bg-white/90 px-5 py-3 font-heading font-black text-[#30273A] shadow-xl">
-              Unlocks on your birthday
+              {reachedUnlockTime
+                ? "It's time! Refresh the page to see it."
+                : `Unlocks on ${user.name}'s birthday`}
             </div>
           </div>
         ) : null}
@@ -154,7 +165,7 @@ export function BirthdayBridge({
         <section className="rounded-2xl bg-white/90 p-5 shadow-xl ring-1 ring-white/80">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-heading text-2xl font-black text-[#30273A]">
-              AI Birthday Speech Player
+              AI Birthday Speech
             </h2>
             <button
               className="rounded-2xl bg-accent px-4 py-2 text-sm font-black text-[#30273A]"
@@ -179,9 +190,15 @@ export function BirthdayBridge({
             </div>
           ) : (
             <p className="mt-4 text-sm font-semibold text-[#463B52]">
-              Your friends&apos; messages are being turned into a surprise...
+              No approved speech yet.
             </p>
           )}
+          {surprise ? (
+            <p className="mt-3 text-xs font-semibold text-[#6A6074]">
+              This speech was written and voiced by AI from friends&apos; messages,
+              then approved by {user.name}.
+            </p>
+          ) : null}
           {showTranscript && surprise ? (
             <p className="mt-4 rounded-2xl bg-bg/70 p-4 text-sm leading-7 text-[#463B52]">
               {surprise.script_text}
@@ -222,13 +239,13 @@ export function BirthdayBridge({
 
         <section>
           <h2 className="font-heading text-2xl font-black text-[#30273A]">
-            Interactive Timeline
+            Photo Timeline
           </h2>
           <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
             {timeline.map((moment) => (
               <div
                 className="min-w-64 rounded-2xl bg-white/90 p-4 shadow-xl ring-1 ring-white/80"
-                key={`${moment.label}-${moment.by}`}
+                key={moment.id}
               >
                 <p className="font-heading font-black text-[#30273A]">
                   {moment.label}
@@ -321,6 +338,10 @@ export function BirthdayBridge({
                 >
                   Add gift
                 </button>
+                <p className="text-xs font-semibold text-[#6A6074]">
+                  This only tracks gift ideas and pledges. JoyDrop does not take or
+                  send money.
+                </p>
               </form>
               <div className="mt-5 grid gap-3">
                 {gifts.map((gift) => {
@@ -354,21 +375,25 @@ export function BirthdayBridge({
               Download Memory Book PDF
             </a>
             <form action={`/api/birthday/${page.userId}/privacy`} method="post">
-              <input name="action" type="hidden" value="allow-search" />
+              <input
+                name="action"
+                type="hidden"
+                value={page.isPublic ? "hide-search" : "allow-search"}
+              />
               <button
                 className="w-full rounded-2xl bg-secondary px-4 py-3 font-heading font-black text-[#173B3A]"
                 type="submit"
               >
-                Allow search engines
+                {page.isPublic ? "Hide from search engines" : "Allow search engines"}
               </button>
             </form>
             <form action={`/api/birthday/${page.userId}/privacy`} method="post">
-              <input name="action" type="hidden" value="pause" />
+              <input name="action" type="hidden" value={page.isHidden ? "resume" : "pause"} />
               <button
                 className="w-full rounded-2xl bg-white px-4 py-3 font-heading font-black text-[#30273A]"
                 type="submit"
               >
-                Pause this page
+                {page.isHidden ? "Show this page again" : "Hide this page"}
               </button>
             </form>
             <form action={`/api/birthday/${page.userId}/privacy`} method="post">
@@ -377,7 +402,7 @@ export function BirthdayBridge({
                 className="w-full rounded-2xl bg-primary px-4 py-3 font-heading font-black text-white"
                 type="submit"
               >
-                Delete forever
+                Delete page content
               </button>
             </form>
           </section>

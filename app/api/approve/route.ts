@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
 import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
+import { seeOther } from "@/lib/http";
+import { LIMITS, tooLong } from "@/lib/input";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 
@@ -53,11 +54,18 @@ export async function POST(request: Request) {
       }
     });
 
-    redirect("/dashboard");
+    return seeOther(request, "/dashboard");
   }
 
   if (!surpriseId) {
     return Response.json({ error: "Missing contribution_id or surprise_id." }, { status: 400 });
+  }
+
+  if (!scriptText || tooLong(scriptText, LIMITS.script)) {
+    return Response.json(
+      { error: `The speech text must be between 1 and ${LIMITS.script} characters.` },
+      { status: 400 }
+    );
   }
 
   const surprise = await prisma.surprise.findFirst({
@@ -94,5 +102,5 @@ export async function POST(request: Request) {
     }
   });
 
-  redirect("/dashboard");
+  return seeOther(request, "/dashboard");
 }

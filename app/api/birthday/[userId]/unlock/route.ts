@@ -14,11 +14,19 @@ export async function POST(
       userId: params.userId
     },
     include: {
-      surprise: true
+      surprise: true,
+      user: true
     }
   });
 
-  if (!page || page.unlockAt > new Date() || page.surprise?.status !== "approved") {
+  if (
+    !page ||
+    page.soft_delete ||
+    page.user.soft_delete ||
+    page.user.paused_bool ||
+    page.unlockAt > new Date() ||
+    page.surprise?.status !== "approved"
+  ) {
     return Response.json({ unlocked: false });
   }
 

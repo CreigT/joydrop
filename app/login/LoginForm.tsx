@@ -1,5 +1,6 @@
 "use client";
 
+import { safeNextPath } from "@/lib/safe-redirect";
 import { useState } from "react";
 import {
   createUserWithEmailAndPassword,
@@ -66,7 +67,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       throw new Error("Unable to create JoyDrop session.");
     }
 
-    window.location.href = nextPath;
+    window.location.href = safeNextPath(nextPath);
   }
 
   async function handleGoogle() {
@@ -122,8 +123,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
     <div className="mt-6 space-y-4">
       {!isFirebaseConfigured ? (
         <p className="rounded-2xl bg-accent/60 p-3 text-sm font-semibold text-[#30273A]">
-          Firebase is not configured yet. Add the NEXT_PUBLIC_FIREBASE_* values
-          in .env to enable sign in.
+          Sign in is not available right now.
         </p>
       ) : null}
       <button

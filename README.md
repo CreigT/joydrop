@@ -1,16 +1,20 @@
 # JoyDrop
 
-JoyDrop is a permission-first AI birthday automation app that helps friends create consent-based birthday surprises. Recipients opt in, friends contribute messages and media through invite links, an admin reviews the AI-generated draft, and the final Birthday Bridge page unlocks on the recipient's birthday.
+**Sponsored by CREIGNIFICENT LLC**
+
+JoyDrop is a permission-first birthday page app. The birthday person signs in and opts in, shares a personal invite link, and friends send messages and media through it. The birthday person approves which messages to use, can generate an AI voice speech from them (a draft until approved), and their Birthday Bridge page unlocks on their birthday. JoyDrop does not send email or text messages.
+
+**Status (v0.1.1):** code and security checks pass; the live deployment is not yet connected to a database, so sign-ups are closed. See [VERIFICATION.md](VERIFICATION.md).
 
 ## What It Does
 
-- Public opt-in flow with explicit consent checkboxes
-- Firebase login with Google and email/password support
+- Opt-in (signed in) with explicit consent checkboxes
+- Firebase login with Google and email/password
 - Friend invite flow for text, voice, photo, video, and GIF contributions
-- Admin dashboard for upcoming birthdays, contribution review, and AI speech generation
-- Birthday Bridge page with countdown, confetti, AI speech player, Memory Wall, guestbook, gift tracker, keepsake PDF, and privacy controls
-- Daily Vercel Cron route for unlocking approved Birthday Bridge pages
-- Prisma/PostgreSQL schema with soft-delete support and data export/erase routes
+- Owner dashboard: approve messages, generate and approve an AI speech, invite link, pause/resume, download or erase data
+- Birthday Bridge page with countdown, confetti, AI speech player, Memory Wall, guestbook, gift tracker (no money handled), keepsake PDF, and privacy controls (search engines, hide, delete content)
+- Daily Vercel Cron route that unlocks pages with an approved speech
+- Prisma/PostgreSQL schema with soft delete and data export/erase routes
 
 ## Tech Stack
 
@@ -58,7 +62,32 @@ npm.cmd run prisma:deploy
 npm.cmd run build
 ```
 
-Vercel Cron is configured in `vercel.json` to call `/api/cron/daily` every day at 14:00 UTC. The route accepts either `Authorization: Bearer CRON_SECRET` or `?secret=CRON_SECRET` for manual testing.
+Vercel Cron is configured in `vercel.json` to call `/api/cron/daily` every day at 14:00 UTC. The route accepts only `Authorization: Bearer CRON_SECRET` (Vercel sends this automatically when `CRON_SECRET` is set).
+
+Pushing to `main` deploys to production on Vercel (https://joydrop-iota.vercel.app). Releases are tagged (`v0.1.1`); see [CHANGELOG.md](CHANGELOG.md).
+
+## Rollback
+
+Pick one:
+
+1. **Vercel Instant Rollback (fastest, no code change):** Vercel dashboard → joydrop → Deployments → choose the last good production deployment → "Promote to Production" / "Instant Rollback". The deployment before v0.1.1 is commit `46ea3d8`.
+2. **Revert the commit (keeps history, redeploys automatically):**
+   ```powershell
+   git revert <commit-sha>
+   git push origin main
+   ```
+3. **Emergency stop:** pause the Vercel project, or remove the cron entry from `vercel.json` and rotate `CRON_SECRET`.
+
+No database migration is part of v0.1.1, so rolling back code needs no data changes.
+
+## Tests
+
+```powershell
+npm.cmd run lint
+npx.cmd tsc --noEmit
+npm.cmd test
+npm.cmd run build
+```
 
 ## Repository Description
 

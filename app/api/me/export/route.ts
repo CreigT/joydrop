@@ -4,9 +4,7 @@ import { getCurrentFirebaseUser } from "@/lib/session";
 
 export async function GET() {
   const session = await getCurrentFirebaseUser();
-  const email = session?.email?.toLowerCase();
-
-  if (!session || !email) {
+  if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -16,7 +14,9 @@ export async function GET() {
 
   const user = await prisma.user.findFirst({
     where: {
-      OR: [{ firebaseUid: session.uid }, { email }]
+      // Match on the verified Firebase UID only. Matching on email let a
+      // different login that claimed the same email read this account.
+      firebaseUid: session.uid
     },
     include: {
       contributions: true,

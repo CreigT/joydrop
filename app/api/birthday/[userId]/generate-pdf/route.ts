@@ -25,7 +25,8 @@ async function buildPdf(userId: string) {
       },
       surprises: {
         where: {
-          soft_delete: false
+          soft_delete: false,
+          status: { in: ["approved", "sent"] }
         },
         orderBy: {
           scheduled_for: "desc"
@@ -56,7 +57,7 @@ async function buildPdf(userId: string) {
           null,
           React.createElement(Text, { style: { fontSize: 28, marginBottom: 18 } }, "JoyDrop Memory Book"),
           React.createElement(Text, { style: { fontSize: 18, marginBottom: 12 } }, user.name),
-          React.createElement(Text, { style: { marginBottom: 18 } }, user.surprises[0]?.script_text ?? "Your friends' messages are being turned into a surprise..."),
+          React.createElement(Text, { style: { marginBottom: 18 } }, user.surprises[0]?.script_text ?? "No approved speech yet."),
           React.createElement(Text, { style: { fontSize: 16, marginBottom: 8 } }, "Photos and Messages"),
           ...user.contributions.map((contribution) =>
             React.createElement(
@@ -85,6 +86,10 @@ export async function GET(
 ) {
   const firebaseUser = await getCurrentFirebaseUser();
 
+  if (!firebaseUser) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!hasDatabaseUrl()) {
     return databaseUnavailableResponse();
   }
@@ -95,8 +100,8 @@ export async function GET(
     }
   });
 
-  if (!firebaseUser || !user || user.firebaseUid !== firebaseUser.uid) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user || user.firebaseUid !== firebaseUser.uid) {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const pdf = await buildPdf(params.userId);

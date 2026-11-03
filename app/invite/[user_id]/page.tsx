@@ -39,8 +39,19 @@ export default async function InvitePage({
             {user.name}
           </h1>
           <p className="mt-3 text-base font-semibold text-[#463B52]">
-            Thanks! We&apos;ll beam this on {formatBirthday(user.birthday_mm_dd)}
+            Send {user.name} a birthday message. {user.name} reviews each message,
+            and approved ones appear on their Birthday Bridge page, which unlocks on{" "}
+            {formatBirthday(user.birthday_mm_dd)}.
           </p>
+          <p className="mt-3 text-sm font-semibold text-[#6A6074]">
+            Approved message text may also be used to write an AI voice speech.
+            Files up to 10 MB.
+          </p>
+          {user.paused_bool ? (
+            <p className="mt-3 rounded-2xl bg-accent/60 p-3 text-sm font-semibold text-[#30273A]">
+              {user.name} has paused JoyDrop, so new messages can&apos;t be sent right now.
+            </p>
+          ) : null}
         </div>
 
         <form
@@ -53,7 +64,7 @@ export default async function InvitePage({
           <div className="space-y-4">
             <label className="block text-sm font-bold text-[#30273A]">
               Contributor name
-              <input className={inputClass} name="contributor_name" required />
+              <input className={inputClass} maxLength={100} name="contributor_name" required />
             </label>
             <label className="block text-sm font-bold text-[#30273A]">
               Contributor email
@@ -105,6 +116,7 @@ export default async function InvitePage({
               Text message
               <textarea
                 className={`${inputClass} min-h-36 resize-y`}
+                maxLength={2000}
                 name="text_message_field"
               />
             </label>
@@ -124,8 +136,9 @@ export default async function InvitePage({
                 required
                 type="checkbox"
               />
-              I give JoyDrop permission to use my voice/likeness to create a
-              birthday surprise for {user.name}
+              I have the right to share what I&apos;m sending, and I give JoyDrop
+              permission to show it on {user.name}&apos;s birthday page and use my
+              message text in an AI-written speech for {user.name}
             </label>
             <button
               className="w-full rounded-2xl bg-primary px-5 py-3 font-heading font-black text-white shadow-lg shadow-primary/30"

@@ -1,14 +1,18 @@
 import { prisma } from "@/lib/prisma";
 
-export async function sendBirthdaySurprise(userId: string, videoUrl: string | null) {
+/**
+ * Records that an approved surprise was published on the recipient's
+ * Birthday Bridge page. JoyDrop does not send email or SMS; delivery means
+ * the page unlocks and shows the approved speech.
+ */
+export async function sendBirthdaySurprise(userId: string, surpriseId: string) {
   await prisma.auditLog.create({
     data: {
-      action: "send_birthday_surprise",
+      action: "birthday_surprise_published",
       user_id: userId,
       meta_json: {
-        channel: "email",
-        video_url: videoUrl,
-        pause_link: `/api/pause?user_id=${userId}`
+        channel: "birthday_page",
+        surprise_id: surpriseId
       }
     }
   });

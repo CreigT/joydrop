@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { safeNextPath } from "@/lib/safe-redirect";
 import { getCurrentFirebaseUser } from "@/lib/session";
 import { LoginForm } from "./LoginForm";
 
@@ -8,9 +9,10 @@ export default async function LoginPage({
   searchParams: { next?: string };
 }) {
   const user = await getCurrentFirebaseUser();
+  const nextPath = safeNextPath(searchParams.next);
 
   if (user) {
-    redirect(searchParams.next || "/dashboard");
+    redirect(nextPath);
   }
 
   return (
@@ -20,9 +22,9 @@ export default async function LoginPage({
           JoyDrop
         </p>
         <h1 className="font-heading text-3xl font-black text-[#30273A]">
-          Sign in with Google
+          Sign in
         </h1>
-        <LoginForm nextPath={searchParams.next || "/dashboard"} />
+        <LoginForm nextPath={nextPath} />
       </section>
     </main>
   );

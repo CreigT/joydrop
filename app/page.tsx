@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { hasDatabaseUrl } from "@/lib/database";
 import { sessionCookieName } from "@/lib/session-cookie";
 
 const inputClass =
   "w-full rounded-2xl border border-white/70 bg-white/85 px-4 py-3 text-sm shadow-sm outline-none transition focus:border-secondary focus:ring-4 focus:ring-secondary/20";
 
-export default function Home() {
+export default function Home({
+  searchParams
+}: {
+  searchParams: { erased?: string };
+}) {
   const hasSession = Boolean(cookies().get(sessionCookieName)?.value);
+  const signupsOpen = hasDatabaseUrl();
 
   return (
     <main className="min-h-screen overflow-hidden bg-bg">
@@ -21,14 +27,15 @@ export default function Home() {
                 JoyDrop
               </h1>
               <p className="max-w-xl text-xl font-semibold leading-relaxed text-[#463B52] sm:text-2xl">
-                AI that makes birthdays unforgettable — with permission only
+                Permission-first birthday pages, built from messages your friends
+                send and you approve.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               {[
-                "Friends opt you in OR you self opt-in",
-                "AI learns what makes you smile via short preference form",
-                "On your birthday, you get one combined video/voice note from all opt-in friends"
+                "Sign in and opt in, then share your personal invite link with friends",
+                "Friends send text, voice, photo, video, or GIF messages; you approve which ones are used",
+                "Optionally generate an AI voice speech from approved messages; your Birthday Bridge page unlocks on your birthday"
               ].map((step, index) => (
                 <div
                   className="rounded-2xl bg-white/85 p-4 shadow-sm ring-1 ring-white/70"
@@ -44,16 +51,50 @@ export default function Home() {
               ))}
             </div>
             <div className="rounded-2xl bg-white/85 p-5 text-sm font-semibold leading-relaxed text-[#463B52] shadow-sm ring-1 ring-white/70">
-              Pause anytime. Human override on every message. We never sell data.
+              Pause anytime from your dashboard. Nothing goes on your page until you
+              approve it, and AI speech drafts stay drafts until you approve them.
+              We don&apos;t sell your data. Heads up: because you approve messages,
+              you will see them before your birthday. JoyDrop does not send email or
+              text messages.
             </div>
             <Link
               className="inline-flex rounded-2xl bg-secondary px-5 py-3 font-heading font-black text-[#173B3A] shadow-lg shadow-secondary/30"
               href={hasSession ? "/dashboard" : "/login"}
             >
-              {hasSession ? "Go to Dashboard" : "Sign in with Google"}
+              {hasSession ? "Go to Dashboard" : "Sign in"}
             </Link>
           </div>
 
+          {searchParams.erased ? (
+            <p className="rounded-2xl bg-white/90 p-5 text-sm font-semibold text-[#463B52] shadow-xl lg:col-span-2">
+              Your JoyDrop data was erased from the app.
+            </p>
+          ) : null}
+          {!signupsOpen ? (
+            <div className="rounded-2xl bg-white/90 p-5 shadow-xl ring-1 ring-white/80 sm:p-7">
+              <h2 className="font-heading text-2xl font-black text-[#30273A]">
+                Sign-ups are not open yet
+              </h2>
+              <p className="mt-3 text-sm font-semibold leading-7 text-[#463B52]">
+                JoyDrop is still being set up. Please check back soon.
+              </p>
+            </div>
+          ) : !hasSession ? (
+            <div className="rounded-2xl bg-white/90 p-5 shadow-xl ring-1 ring-white/80 sm:p-7">
+              <h2 className="font-heading text-2xl font-black text-[#30273A]">
+                Sign in to opt in
+              </h2>
+              <p className="mt-3 text-sm font-semibold leading-7 text-[#463B52]">
+                You need an account so only you can manage your birthday page.
+              </p>
+              <Link
+                className="mt-5 inline-flex rounded-2xl bg-primary px-5 py-3 font-heading font-black text-white shadow-lg shadow-primary/30"
+                href="/login?next=/onboarding"
+              >
+                Sign in to get started
+              </Link>
+            </div>
+          ) : (
           <form
             action="/api/optin"
             method="post"
@@ -78,6 +119,9 @@ export default function Home() {
                   required
                   type="email"
                 />
+                <span className="mt-1 block text-xs font-normal text-gray-500">
+                  We use the email on your sign-in account when it has one.
+                </span>
               </label>
               <label className="block text-sm font-bold text-[#30273A]">
                 Birthday
@@ -146,7 +190,7 @@ export default function Home() {
                   required
                   type="checkbox"
                 />
-                Friends can add me to their surprise list
+                Friends I share my invite link with can send me birthday messages
               </label>
               <button
                 className="w-full rounded-2xl bg-primary px-5 py-3 font-heading font-black text-white shadow-lg shadow-primary/30 transition hover:-translate-y-0.5 hover:bg-[#f85f94]"
@@ -156,11 +200,9 @@ export default function Home() {
               </button>
             </div>
           </form>
+          )}
         </div>
       </section>
-      <footer className="px-5 py-8 text-center text-sm font-semibold text-[#463B52]">
-        A Smile Automations project
-      </footer>
     </main>
   );
 }

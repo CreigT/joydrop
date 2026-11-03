@@ -1,12 +1,13 @@
 import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
+import { seeOther, wantsHtml } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 
-export async function DELETE() {
+/** Erase (soft-delete) the signed-in user's own account and content. */
+async function eraseOwnAccount() {
   const session = await getCurrentFirebaseUser();
-  const email = session?.email?.toLowerCase();
 
-  if (!session || !email) {
+  if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -16,7 +17,7 @@ export async function DELETE() {
 
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [{ firebaseUid: session.uid }, { email }],
+      firebaseUid: session.uid,
       soft_delete: false
     }
   });
@@ -87,12 +88,27 @@ export async function DELETE() {
     data: {
       action: "user_erased",
       user_id: user.id,
-      meta_json: {
-        email
-      },
       soft_delete: true
     }
   });
 
   return Response.json({ erased: true });
+}
+
+export async function DELETE() {
+  return eraseOwnAccount();
+}
+
+/** HTML form fallback for the dashboard "Erase my data" button. */
+export async function POST(request: Request) {
+  const formData = await request.formData().catch(() => null);
+  if (String(formData?.get("confirm") ?? "") !== "on") {
+    return Response.json({ error: "Tick the confirmation box to erase your data." }, { status: 400 });
+  }
+
+  const response = await eraseOwnAccount();
+  if (response.ok && wantsHtml(request)) {
+    return seeOther(request, "/?erased=1");
+  }
+  return response;
 }

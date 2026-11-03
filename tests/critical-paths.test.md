@@ -23,10 +23,11 @@ Covered in `tests/validation.test.ts`:
 
 ### 3. Cron Secret Enforcement
 - Call `/api/cron/daily` without secret in production → 401
-- Call with correct `Authorization: Bearer <CRON_SECRET>` or `?secret=` → 200
+- Call with correct `Authorization: Bearer <CRON_SECRET>` → 200 (`?secret=` is no longer accepted → 401)
 
 ### 4. Pause / Kill
-- Set paused_bool = true via `/api/pause?user_id=...` → cron skips user for unlock and surprise send
+- Signed in, click "Pause JoyDrop" on the dashboard (POST `/api/pause`) → cron skips user for unlock and surprise send; invite form refuses new messages
+- Unauthenticated POST `/api/pause` → 401; another user's `user_id` → 403; GET → 405
 - Soft-delete path works for old contributions
 
 ### 5. Unlock Timing

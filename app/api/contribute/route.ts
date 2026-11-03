@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { formatBirthday } from "@/lib/dates";
+import { clientIp } from "@/lib/http";
+import { isContributionType, isValidEmail, LIMITS, tooLong } from "@/lib/input";
 import { prisma } from "@/lib/prisma";
 import { uploadContributionFile } from "@/lib/storage";
 import { validateContributionFile, checkRateLimit } from "@/lib/validation";
@@ -10,8 +12,7 @@ export async function POST(request: Request) {
     return databaseUnavailableResponse();
   }
 
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
-  if (!checkRateLimit(ip)) {
+  if (!checkRateLimit(`contribute:${clientIp(request)}`)) {
     return Response.json({ error: "Too many requests. Please try again later." }, { status: 429 });
   }
 
@@ -39,6 +40,25 @@ export async function POST(request: Request) {
   if (!user || !contributorName || !contributorEmail || !consent) {
     return Response.json(
       { error: "Missing required contribution fields." },
+      { status: 400 }
+    );
+  }
+
+  if (user.paused_bool) {
+    return Response.json(
+      { error: "This person has paused JoyDrop and is not accepting messages right now." },
+      { status: 403 }
+    );
+  }
+
+  if (
+    !isContributionType(type) ||
+    !isValidEmail(contributorEmail) ||
+    tooLong(contributorName, LIMITS.name) ||
+    tooLong(messageText, LIMITS.message)
+  ) {
+    return Response.json(
+      { error: `Check your name, email, type, and message (max ${LIMITS.message} characters).` },
       { status: 400 }
     );
   }

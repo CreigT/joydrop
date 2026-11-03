@@ -7,18 +7,32 @@ export default function PrivacyPage() {
         </h1>
         <div className="mt-6 space-y-4 text-sm leading-7 text-[#463B52]">
           <p>
-            JoyDrop collects opt-in birthday details, friend contributions, and
-            generated surprise content only to create consent-based birthday
-            surprises.
+            JoyDrop collects what you give it: your name, email, and birthday
+            (month and day only), plus messages and files friends send through
+            your invite link. It uses them only to build your Birthday Bridge page
+            and, if you choose, an AI speech.
           </p>
           <p>
-            Pause anytime. Human override on every message. We never sell data.
+            <strong>Services we use.</strong> Sign-in is handled by Google Firebase.
+            Uploaded files are stored in Firebase Storage (or in our database if
+            storage is unavailable). The site runs on Vercel. When you click
+            &quot;Generate AI Speech,&quot; the text of your approved messages is sent
+            to OpenAI to write the speech and to ElevenLabs to create the voice.
           </p>
           <p>
-            You can export your data at /api/me/export and erase your data at
-            /api/me. Contributions older than 90 days are auto-deleted unless a
-            Surprise was sent.
+            <strong>Who can see what.</strong> Your dashboard is visible only to you.
+            Your Birthday Bridge page can be opened by anyone who has its link, but
+            it shows only messages you approved, and only after it unlocks on your
+            birthday. Pages are hidden from search engines unless you turn that on.
           </p>
+          <p>
+            <strong>Your controls.</strong> From your dashboard you can pause JoyDrop,
+            download your data, or erase it. Erasing hides your account, messages,
+            and page everywhere in the app; the records are kept in the database
+            marked as deleted (soft delete). Contributions older than 90 days are
+            also marked deleted automatically unless a surprise was delivered.
+          </p>
+          <p>We don&apos;t sell your data.</p>
         </div>
       </section>
     </main>

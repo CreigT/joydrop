@@ -1,10 +1,21 @@
 import { redirect } from "next/navigation";
 import { hasDatabaseUrl } from "@/lib/database";
-import { birthdayInNext30Days, formatBirthday } from "@/lib/dates";
+import { formatBirthday } from "@/lib/dates";
+
+const ERRORS: Record<string, string> = {
+  ai_unavailable:
+    "The AI speech could not be generated right now. The AI services may not be set up yet. Nothing was changed.",
+  no_approved_messages: "Approve at least one friend message before generating a speech."
+};
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams
+}: {
+  searchParams: { error?: string };
+}) {
+  const errorMessage = searchParams.error ? ERRORS[searchParams.error] : undefined;
   const session = await getCurrentFirebaseUser();
 
   if (!session) {
@@ -55,7 +66,7 @@ export default async function DashboardPage() {
     }
   });
 
-  const users = currentUser && birthdayInNext30Days(currentUser.birthday_mm_dd) ? [currentUser] : [];
+  const users = currentUser ? [currentUser] : [];
 
   return (
     <main className="min-h-screen bg-bg px-5 py-8">
@@ -72,7 +83,16 @@ export default async function DashboardPage() {
         <div className="grid gap-5">
           {users.length === 0 ? (
             <p className="rounded-2xl bg-white/90 p-5 text-sm font-semibold text-[#463B52] shadow-xl ring-1 ring-white/80">
-              No upcoming birthday found for your account, or you have not opted in yet.
+              You have not opted in yet.{" "}
+              <a className="underline" href="/onboarding">
+                Opt in here
+              </a>
+              .
+            </p>
+          ) : null}
+          {errorMessage ? (
+            <p className="rounded-2xl bg-accent/60 p-4 text-sm font-semibold text-[#30273A]">
+              {errorMessage}
             </p>
           ) : null}
           {users.map((user) => {
@@ -92,15 +112,72 @@ export default async function DashboardPage() {
                     <p className="mt-1 text-sm font-semibold text-[#463B52]">
                       {formatBirthday(user.birthday_mm_dd)} - {user.email}
                     </p>
+                    {user.paused_bool ? (
+                      <p className="mt-3 rounded-2xl bg-accent/60 p-3 text-sm font-semibold text-[#30273A]">
+                        JoyDrop is paused. Friends cannot send new messages and your
+                        page will not unlock automatically.
+                      </p>
+                    ) : null}
+                    <div className="mt-4 space-y-2 text-sm font-semibold text-[#463B52]">
+                      <p>
+                        Your invite link to share with friends:{" "}
+                        <a className="break-all underline" href={`/invite/${user.id}`}>
+                          /invite/{user.id}
+                        </a>
+                      </p>
+                      <p>
+                        Your Birthday Bridge page:{" "}
+                        <a className="break-all underline" href={`/birthday/${user.id}`}>
+                          /birthday/{user.id}
+                        </a>
+                      </p>
+                    </div>
+                    <form action="/api/pause" className="mt-4" method="post">
+                      <input name="user_id" type="hidden" value={user.id} />
+                      <input
+                        name="action"
+                        type="hidden"
+                        value={user.paused_bool ? "resume" : "pause"}
+                      />
+                      <button
+                        className="rounded-2xl bg-white px-5 py-3 font-heading font-black text-[#30273A] shadow"
+                        type="submit"
+                      >
+                        {user.paused_bool ? "Resume JoyDrop" : "Pause JoyDrop"}
+                      </button>
+                    </form>
                     <form action="/api/generate" className="mt-5" method="post">
                       <input name="user_id" type="hidden" value={user.id} />
                       <button
                         className="rounded-2xl bg-primary px-5 py-3 font-heading font-black text-white shadow-lg shadow-primary/30"
                         type="submit"
                       >
-                        Generate Speech
+                        Generate AI Speech
                       </button>
+                      <p className="mt-2 text-xs font-semibold text-[#463B52]">
+                        Uses only approved messages. Message text is sent to OpenAI to
+                        write the speech and to ElevenLabs to create the voice. The
+                        result is a draft until you approve it.
+                      </p>
                     </form>
+                    <div className="mt-6 space-y-3 rounded-2xl bg-bg/70 p-4 text-sm text-[#463B52]">
+                      <p className="font-bold text-[#30273A]">Your data</p>
+                      <a className="block underline" href="/api/me/export">
+                        Download my data (JSON)
+                      </a>
+                      <form action="/api/me" className="space-y-2" method="post">
+                        <label className="flex gap-2 text-xs font-semibold">
+                          <input name="confirm" required type="checkbox" />
+                          I understand this hides my account, messages, and page in JoyDrop.
+                        </label>
+                        <button
+                          className="rounded-2xl bg-primary px-4 py-2 text-xs font-black text-white"
+                          type="submit"
+                        >
+                          Erase my data
+                        </button>
+                      </form>
+                    </div>
                   </div>
 
                   <div className="space-y-4">
@@ -132,7 +209,11 @@ export default async function DashboardPage() {
                                   Approve
                                 </button>
                               </form>
-                            ) : null}
+                            ) : (
+                              <p className="mt-2 text-xs font-black text-[#30273A]">
+                                Approved
+                              </p>
+                            )}
                           </div>
                         ))}
                         {user.contributions.length === 0 ? (
@@ -155,7 +236,7 @@ export default async function DashboardPage() {
                           value={latestDraft.id}
                         />
                         <label className="block text-sm font-bold text-[#30273A]">
-                          AI Draft
+                          {latestDraft.status === "draft" ? "AI Draft (not approved yet)" : "Approved speech"}
                           <textarea
                             className="mt-2 min-h-40 w-full resize-y rounded-2xl border border-white/70 bg-white/85 px-4 py-3 text-sm shadow-sm outline-none transition focus:border-secondary focus:ring-4 focus:ring-secondary/20"
                             name="script_text"
@@ -166,8 +247,12 @@ export default async function DashboardPage() {
                           className="rounded-2xl bg-secondary px-5 py-3 font-heading font-black text-[#173B3A] shadow-lg shadow-secondary/30"
                           type="submit"
                         >
-                          Approve
+                          Approve speech
                         </button>
+                        <p className="text-xs font-semibold text-[#463B52]">
+                          Editing the text changes the transcript shown on your page. It
+                          does not re-record the voice audio.
+                        </p>
                       </form>
                     ) : null}
                   </div>

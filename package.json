@@ -1,6 +1,6 @@
 {
   "name": "joydrop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Permission-first AI birthday automation app with opt-in invites, reviewed AI surprises, and a Birthday Bridge memory page.",
   "private": true,
   "scripts": {

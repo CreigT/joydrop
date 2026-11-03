@@ -7,19 +7,21 @@ export default function TermsPage() {
         </h1>
         <div className="mt-6 space-y-4 text-sm leading-7 text-[#463B52]">
           <p>
-            JoyDrop is a permission-first AI birthday automation app. You must
-            only submit information, messages, voices, likenesses, and photos
-            that you have permission to provide.
+            JoyDrop is a permission-first birthday page app. Only submit
+            information, messages, voices, likenesses, and photos that you have the
+            right and permission to share.
           </p>
           <p>
-            AI-generated drafts require a human review option before delivery.
-            Approved surprises may be scheduled and sent on the recipient&apos;s
-            birthday.
+            AI speech drafts stay drafts until the birthday person approves them.
+            Approved messages and speeches appear on the Birthday Bridge page when
+            it unlocks. JoyDrop does not send email or text messages, and the gift
+            tracker does not handle money.
           </p>
           <p>
-            By using JoyDrop, you agree not to submit unlawful, harmful, or
-            non-consensual content.
+            Do not submit unlawful, harmful, or non-consensual content. The page
+            owner can hide or delete content on their page at any time.
           </p>
+          <p>JoyDrop is provided as is, without guarantees of availability.</p>
         </div>
       </section>
     </main>
