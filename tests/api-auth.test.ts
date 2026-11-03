@@ -21,6 +21,7 @@ const db = vi.hoisted(() => ({
   guestbookEntry: { create: vi.fn(), updateMany: vi.fn(), findMany: vi.fn() },
   gift: { create: vi.fn(), updateMany: vi.fn(), findMany: vi.fn() },
   auditLog: { create: vi.fn() },
+  card: { findMany: vi.fn(), updateMany: vi.fn() },
   $transaction: vi.fn()
 }));
 
@@ -54,6 +55,8 @@ function form(url: string, fields: Record<string, string>, accept = "application
 beforeEach(() => {
   vi.clearAllMocks();
   session.current = null;
+  db.card.findMany.mockResolvedValue([]);
+  db.card.updateMany.mockResolvedValue({ count: 0 });
 });
 
 describe("/api/pause", () => {

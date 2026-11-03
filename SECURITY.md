@@ -22,6 +22,12 @@ See the operational checklist used for this work:
 | `POST .../unlock` | Anyone; only unlocks when the time has passed and the page is not hidden and the user is not paused. |
 | `GET /api/cron/daily` | Vercel Cron with `Authorization: Bearer CRON_SECRET` only. |
 
+## Birthday Cards (v0.1.3)
+- Making a card needs no sign-in; it is rate-limited per IP and validated (lengths, file type, 4 MB).
+- Card link: random 192-bit token. Sender manage link: random 256-bit token, stored only as a SHA-256 hash.
+- Before a card is claimed, anyone with its link can hide, show, or delete it; after it is claimed only the signed-in claimer can. Anyone with the link can report it (permanent).
+- JoyDrop does not send texts or emails for cards; the sender's own apps do.
+
 ## External Services
 Firebase (sign-in, file storage), Vercel (hosting, cron), and a hosted Postgres database. As of v0.1.2 JoyDrop calls no AI services; the AI speech feature was removed.
 

@@ -45,7 +45,7 @@ export default async function InvitePage({
           </p>
           <p className="mt-3 text-sm font-semibold text-[#6A6074]">
             {user.name} will see your message when reviewing it, before the
-            birthday. Files up to 10 MB.
+            birthday. Files up to 4 MB.
           </p>
           {user.paused_bool ? (
             <p className="mt-3 rounded-2xl bg-accent/60 p-3 text-sm font-semibold text-[#30273A]">

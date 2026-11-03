@@ -2,9 +2,9 @@
 
 **Sponsored by CREIGNIFICENT LLC**
 
-JoyDrop is a permission-first birthday page app. The birthday person signs in and opts in, shares a personal invite link, and friends send messages and media through it. The birthday person approves which messages to use, and their Birthday Bridge page unlocks at midnight Pacific Time on their birthday and shows the approved messages. JoyDrop does not send email or text messages and does not use AI services.
+JoyDrop is a permission-first birthday page app. The birthday person signs in and opts in, shares a personal invite link, and friends send messages and media through it. The birthday person approves which messages to use, and their Birthday Bridge page unlocks at midnight Pacific Time on their birthday and shows the approved messages. Anyone can also make a one-off birthday card for a friend who hasn't signed up and send the link from their own phone or email. JoyDrop does not send email or text messages and does not use AI services.
 
-**Status (v0.1.2):** see [VERIFICATION.md](VERIFICATION.md) for what has and has not been verified on the live site.
+**Status (v0.1.3):** see [VERIFICATION.md](VERIFICATION.md) for what has and has not been verified on the live site.
 
 ## What It Does
 
@@ -13,6 +13,7 @@ JoyDrop is a permission-first birthday page app. The birthday person signs in an
 - Friend invite flow for text, voice, photo, video, and GIF contributions
 - Owner dashboard: review and approve messages (with attached media), invite link, pause/resume, download or erase data
 - Birthday Bridge page with countdown, confetti, Memory Wall, guestbook, gift tracker (no money handled), keepsake PDF, and privacy controls (search engines, hide, delete content)
+- Birthday cards (no sign-in needed to make one): the sender writes a message, optionally attaches a file (up to 4 MB), and gets a private "Send it" page with text-message, email, copy-link, and share-sheet buttons that open the sender's own apps. Card links use a random 192-bit token and are hidden from search engines. The card can be viewed as soon as the link is opened. The birthday person can hide, report, or delete the card, or sign in and claim it; the sender can delete it from the private page.
 - Daily Vercel Cron route that unlocks pages once their unlock time has passed
 - Prisma/PostgreSQL schema with soft delete and data export/erase routes
 
@@ -54,7 +55,7 @@ Set these in Vercel Project Settings before deploying:
 
 Vercel Cron is configured in `vercel.json` to call `/api/cron/daily` every day at 14:00 UTC. The route accepts only `Authorization: Bearer CRON_SECRET` (Vercel sends this automatically when `CRON_SECRET` is set).
 
-Pushing to `main` deploys to production on Vercel (https://joydrop-iota.vercel.app). Releases are tagged (`v0.1.1`, `v0.1.2`); see [CHANGELOG.md](CHANGELOG.md).
+Pushing to `main` deploys to production on Vercel (https://joydrop-iota.vercel.app). Releases are tagged (`v0.1.1`, `v0.1.2`, `v0.1.3`); see [CHANGELOG.md](CHANGELOG.md).
 
 ## Rollback
 
@@ -68,7 +69,7 @@ Pick one:
    ```
 3. **Emergency stop:** pause the Vercel project, or remove the cron entry from `vercel.json` and rotate `CRON_SECRET`.
 
-v0.1.1 and v0.1.2 add no new migrations, so rolling back code needs no data changes.
+v0.1.1 and v0.1.2 add no new migrations. v0.1.3 adds one migration that only creates a new `Card` table; rolling back the code leaves that table unused and needs no data changes.
 
 ## Tests
 

@@ -45,6 +45,14 @@
 - **Unlock time** is midnight Pacific Time (DST-aware) instead of UTC midnight; pages unlock without needing a speech.
 - **Data retention**: the cron now marks only never-approved messages older than 365 days as deleted (it used to delete all messages older than 90 days unless a speech was sent, which could remove a page's content before the birthday).
 
+## Changes in v0.1.3 (birthday cards)
+- New unauthenticated surface: `POST /api/cards` (create), `POST /api/cards/[token]` (hide/show/report/delete/claim), `POST /api/cards/manage` (sender delete), and the `/card/[token]` and `/send/[manageToken]` pages.
+- Threat: guessing card links. Control: 192-bit random token; malformed tokens rejected; pages `noindex` and `no-referrer`.
+- Threat: someone else deleting or claiming a card. Control: before claiming, anyone holding the link (intended to be only the birthday person) can hide/show/delete; after claiming only the signed-in claimer can; claim needs sign-in and fails if already claimed (409). Report is open to any link holder and is one-way.
+- Threat: sender manage link leak from the database. Control: only its SHA-256 hash is stored.
+- Threat: spam or abusive cards. Control: per-IP rate limits, length and file checks, report removes the card. Residual: limits are per server instance; no content moderation beyond reporting.
+- Threat: JoyDrop used to send unwanted messages. Control: JoyDrop sends nothing; the sender shares the link from their own apps.
+
 ## Controls (Current + Planned)
 - Explicit consent checkboxes required
 - Firebase Auth + middleware on dashboard/approve
@@ -62,7 +70,8 @@
 - In-memory rate limiting is not durable across serverless instances
 - No automated moderation of friend content beyond owner review
 - File content is not scanned for malware
-- Public invite links can be shared widely
+- Public invite links and card links can be shared widely; whoever has an unclaimed card link can delete it
+- Files attached to deleted cards may remain in storage until cleaned up
 - No automated alerting on anomalous activity
 
 ## Assumptions

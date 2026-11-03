@@ -35,6 +35,16 @@ Covered in `tests/validation.test.ts`:
 - unlockAt is midnight Pacific Time on the birthday
 - Unlocks when unlockAt <= now AND the page is not hidden AND the user is not paused (no speech required)
 
+### 6. Birthday Cards (v0.1.3)
+- `/send` signed out → form shown; missing names, message, or permission box → 400; file over 4 MB or wrong type → 400
+- Create → 303 to `/send/<manage token>`; the page shows text, email, copy, and (where supported) share buttons with `/card/<token>`
+- `/card/<token>` opens immediately, is `noindex`, and shows hide, delete, report, and claim controls
+- Hide → card shows "This card is hidden" to others; Show restores it
+- Claim needs sign-in; after claiming, a different login gets 403 on hide/delete and 409 on claim
+- Report → `/card/removed`, card returns 404 from then on
+- Sender "Delete this card" with the manage link → card returns 404
+- Export includes claimed cards; erase deletes them
+
 ## How to Run Automated Tests
 ```bash
 npm install

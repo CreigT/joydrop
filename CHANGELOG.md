@@ -2,6 +2,33 @@
 
 **Sponsored by CREIGNIFICENT LLC**
 
+## v0.1.3 — 2026-11-02
+
+### Added
+- Sender-first birthday cards. Anyone can make a card for a friend who hasn't signed up (`/send`): names, a message, and an optional photo, GIF, video, or voice file, plus a permission checkbox. No sign-in needed.
+- "Send it" page (`/send/<private token>`): buttons that open the sender's own Messages app (`sms:` link) and email app (`mailto:` link) with the card link filled in, a Copy link button, and the device share sheet where the browser supports it. JoyDrop doesn't send texts or emails.
+- Card page (`/card/<token>`): viewable as soon as the link is opened (stated on the page and the send form). The birthday person can hide, show, report (removes it for good), or delete the card, or sign in and claim it; after claiming, only they can hide, show, or delete it. Claimed cards appear on the dashboard under "Cards you've received".
+- The sender can delete the card from the private "Send it" page.
+- Landing page link: "Make a birthday card".
+
+### Security
+- Card links use a random 192-bit token; the sender's manage link uses a separate 256-bit token stored only as a SHA-256 hash.
+- Card and send pages are `noindex`, send no referrer, and malformed tokens are rejected before any database lookup.
+- Per-IP rate limits on creating and changing cards; length limits on names (100) and message (2,000); file type and size checks.
+- Deleting or reporting a card clears its message and file link.
+- Export includes claimed cards; erase also deletes them.
+
+### Changed
+- Upload limit lowered from 10 MB to 4 MB to fit Vercel's request size limit (invite page copy updated).
+- Privacy, terms, README, SECURITY, THREAT_MODEL, and VERIFICATION describe the card flow.
+
+### Database
+- New migration `20261102120000_cards`: creates the `Card` table only. Applied automatically by the build when a database is connected.
+
+### Tests
+- `tests/cards.test.ts`: token format and hashing, share links, access rules, create/validate/rate-limit, hide/report/claim/ownership, sender delete.
+- `tests/flow.db.test.ts`: card flow on a real database (claim, protection, export, erase, report, sender delete).
+
 ## v0.1.2 — 2026-11-02
 
 ### Removed

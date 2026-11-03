@@ -56,6 +56,16 @@ export default function Home({
               you will see them before your birthday. JoyDrop does not send email or
               text messages.
             </div>
+            <div className="rounded-2xl bg-white/85 p-5 text-sm font-semibold leading-relaxed text-[#463B52] shadow-sm ring-1 ring-white/70">
+              <p className="font-heading text-lg font-black text-[#30273A]">Make a card for a friend</p>
+              <p className="mt-1">
+                Write a birthday card for someone, even if they haven&apos;t signed up. You send the
+                link from your phone; JoyDrop doesn&apos;t send texts or emails.
+              </p>
+              <Link className="mt-3 inline-flex rounded-2xl bg-accent px-4 py-2 font-heading font-black text-[#30273A]" href="/send">
+                Make a birthday card
+              </Link>
+            </div>
             <Link
               className="inline-flex rounded-2xl bg-secondary px-5 py-3 font-heading font-black text-[#173B3A] shadow-lg shadow-secondary/30"
               href={hasSession ? "/dashboard" : "/login"}

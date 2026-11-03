@@ -1,4 +1,5 @@
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+// Vercel functions accept request bodies up to about 4.5 MB, so files are capped at 4 MB.
+export const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 const ALLOWED_TYPES: Record<string, string[]> = {
   voice: ["audio/webm", "audio/mpeg", "audio/wav", "audio/ogg"],
   photo: ["image/jpeg", "image/png", "image/webp", "image/gif"],
@@ -10,7 +11,7 @@ export function validateContributionFile(file: File | null, kind: string): strin
   if (!file || file.size === 0) return null;
 
   if (file.size > MAX_FILE_SIZE) {
-    return `File too large (max 10 MB for ${kind})`;
+    return `File too large (max 4 MB for ${kind})`;
   }
 
   const allowed = ALLOWED_TYPES[kind];

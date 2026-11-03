@@ -22,7 +22,16 @@ async function eraseOwnAccount() {
     }
   });
 
+  // Cards this login claimed are removed too (message and file link cleared).
+  const cards = await prisma.card.updateMany({
+    where: { claimedByUid: session.uid, status: { not: "deleted" } },
+    data: { status: "deleted", message: "", mediaUrl: null, mediaType: null }
+  });
+
   if (!existingUser) {
+    if (cards.count > 0) {
+      return Response.json({ erased: true });
+    }
     return Response.json({ error: "User not found." }, { status: 404 });
   }
 

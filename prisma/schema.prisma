@@ -110,3 +110,27 @@ enum SurpriseStatus {
   approved
   sent
 }
+
+/// A birthday card made by a sender for someone who may not have an account.
+/// The sender shares the card link themselves; JoyDrop sends nothing.
+model Card {
+  id              String   @id @default(cuid())
+  /// Random, unguessable token used in the card link (/card/<token>).
+  token           String   @unique
+  /// SHA-256 of the sender's private manage token (the token itself is never stored).
+  manageTokenHash String   @unique
+  recipientName   String
+  senderName      String
+  message         String
+  mediaUrl        String?
+  mediaType       String?
+  /// active | hidden | reported | deleted
+  status          String   @default("active")
+  /// Firebase uid of the birthday person once they claim the card by signing in.
+  claimedByUid    String?
+  viewCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([claimedByUid])
+}

@@ -20,6 +20,14 @@ export default function TermsPage() {
             Do not submit unlawful, harmful, or non-consensual content. The page
             owner can hide or delete content on their page at any time.
           </p>
+          <p>
+            Birthday cards: you can make a card for someone without an account. You
+            send the card link yourself from your phone or email; JoyDrop doesn&apos;t
+            send texts or emails. Send it only to the person it is for, and only
+            include content you have the right to share. Anyone with the link can view
+            the card. The birthday person can hide, report, or delete it, and reported
+            cards are removed for good.
+          </p>
           <p>JoyDrop is provided as is, without guarantees of availability.</p>
         </div>
       </section>

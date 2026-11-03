@@ -28,9 +28,25 @@ export async function GET() {
     }
   });
 
+  const receivedCards = await prisma.card.findMany({
+    where: { claimedByUid: session.uid, status: { in: ["active", "hidden"] } },
+    select: {
+      recipientName: true,
+      senderName: true,
+      message: true,
+      mediaUrl: true,
+      mediaType: true,
+      status: true,
+      createdAt: true
+    }
+  });
+
   if (!user || user.soft_delete) {
+    if (receivedCards.length > 0) {
+      return Response.json({ received_cards: receivedCards });
+    }
     return Response.json({ error: "User not found." }, { status: 404 });
   }
 
-  return Response.json(user);
+  return Response.json({ ...user, received_cards: receivedCards });
 }

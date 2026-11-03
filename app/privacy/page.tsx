@@ -27,9 +27,22 @@ export default function PrivacyPage() {
           <p>
             <strong>Your controls.</strong> From your dashboard you can pause JoyDrop,
             download your data, or erase it. Erasing hides your account, messages,
-            and page everywhere in the app; the records are kept in the database
+            page, and any cards you claimed everywhere in the app; the records are kept in the database
             marked as deleted (soft delete). Friend messages you never approve are
             marked deleted automatically after 365 days.
+          </p>
+          <p>
+            <strong>Birthday cards.</strong> Anyone can make a birthday card for a
+            friend without an account. A card stores the names and message the sender
+            types and any file they attach. The sender shares the card link from their
+            own phone or email; JoyDrop doesn&apos;t send texts or emails and never
+            receives anyone&apos;s phone number or email address for a card. Anyone with
+            the card link can view it as soon as it is created. Card pages are hidden
+            from search engines. The birthday person can hide, report, or delete the
+            card, or sign in and claim it so only they can change it. The sender can
+            delete it from their private share page. When a card is deleted or
+            reported, its message and file link are cleared from the database; an
+            attached file may remain in storage until it is cleaned up.
           </p>
           <p>We don&apos;t sell your data.</p>
         </div>

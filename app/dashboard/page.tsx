@@ -4,6 +4,7 @@ import { formatBirthday } from "@/lib/dates";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
+import { MediaView } from "@/components/MediaView";
 
 export default async function DashboardPage() {
   const session = await getCurrentFirebaseUser();
@@ -49,6 +50,11 @@ export default async function DashboardPage() {
   });
 
   const users = currentUser ? [currentUser] : [];
+
+  const receivedCards = await prisma.card.findMany({
+    where: { claimedByUid: session.uid, status: { in: ["active", "hidden"] } },
+    orderBy: { createdAt: "desc" }
+  });
 
   return (
     <main className="min-h-screen bg-bg px-5 py-8">
@@ -159,7 +165,7 @@ export default async function DashboardPage() {
                               {contribution.contributor_name}
                             </p>
                             <p>{contribution.message_text}</p>
-                            <ContributionMedia
+                            <MediaView
                               src={contribution.fileUrl ?? contribution.photo_url ?? contribution.voice_url}
                               type={contribution.type}
                             />
@@ -198,22 +204,28 @@ export default async function DashboardPage() {
             );
           })}
         </div>
+
+        {receivedCards.length > 0 ? (
+          <div className="mt-8 rounded-2xl bg-white/90 p-5 shadow-xl ring-1 ring-white/80">
+            <h2 className="font-heading text-2xl font-black text-[#30273A]">Cards you&apos;ve received</h2>
+            <div className="mt-4 space-y-3">
+              {receivedCards.map((card) => (
+                <div className="rounded-2xl bg-bg/70 p-4" key={card.id}>
+                  <p className="text-sm font-black text-[#30273A]">
+                    From {card.senderName}
+                    {card.status === "hidden" ? " (hidden)" : ""}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm font-semibold text-[#463B52]">{card.message}</p>
+                  <MediaView src={card.mediaUrl} type={card.mediaType ?? ""} />
+                  <a className="mt-2 inline-block text-xs font-black underline" href={`/card/${card.token}`}>
+                    Open card
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
     </main>
   );
-}
-
-/* eslint-disable @next/next/no-img-element */
-function ContributionMedia({ src, type }: { src: string | null; type: string }) {
-  if (!src) return null;
-  if (type === "photo" || type === "gif") {
-    return <img alt="Attached file" className="mt-2 max-h-48 rounded-xl" src={src} />;
-  }
-  if (type === "voice") {
-    return <audio className="mt-2 w-full" controls src={src} />;
-  }
-  if (type === "video") {
-    return <video className="mt-2 max-h-48 w-full rounded-xl" controls src={src} />;
-  }
-  return null;
 }

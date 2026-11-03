@@ -1,6 +1,6 @@
 {
   "name": "joydrop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Permission-first birthday pages built from friends' messages that the birthday person approves.",
   "private": true,
   "scripts": {

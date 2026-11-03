@@ -51,6 +51,7 @@ run("JoyDrop flow on a real database", () => {
 
   afterAll(async () => {
     await prisma.user.deleteMany({ where: { firebaseUid: { in: [OWNER.uid, OTHER.uid] } } });
+    await prisma.card.deleteMany({ where: { senderName: "TEST DATA sender" } });
     await prisma.$disconnect();
   });
 
@@ -167,5 +168,64 @@ run("JoyDrop flow on a real database", () => {
     expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).soft_delete).toBe(true);
     session.current = null;
     expect((await publicPage(new Request("http://x"), { params: { userId } })).status).toBe(404);
+  });
+
+  it("sender-first card: create, share, claim, protect, export, erase, report, sender delete", async () => {
+    const { POST: createCard } = await import("@/app/api/cards/route");
+    const { POST: cardAction } = await import("@/app/api/cards/[token]/route");
+    const { POST: manage } = await import("@/app/api/cards/manage/route");
+    const { GET: exportMe } = await import("@/app/api/me/export/route");
+    const { POST: erase } = await import("@/app/api/me/route");
+    const { hashManageToken } = await import("@/lib/cards");
+
+    async function make() {
+      session.current = null;
+      const res = await createCard(
+        form({ recipient_name: "TEST DATA recipient", sender_name: "TEST DATA sender", message: "TEST DATA message", permission_checkbox: "on" })
+      );
+      expect(res.status).toBe(303);
+      const manageToken = res.headers.get("location")!.split("/send/")[1];
+      const card = await prisma.card.findUniqueOrThrow({ where: { manageTokenHash: hashManageToken(manageToken) } });
+      return { manageToken, card };
+    }
+    const act = (token: string, action: string, accept = "application/json") =>
+      cardAction(form({ action }, accept), { params: { token } });
+
+    // Card 1: claimed by OTHER, protected, exported, then erased with OTHER's data.
+    const one = await make();
+    expect(one.card.status).toBe("active");
+    expect(one.card.token).not.toBe(one.manageToken);
+    expect((await act(one.card.token, "hide")).status).toBe(200);
+    expect((await act(one.card.token, "show")).status).toBe(200);
+    expect((await act(one.card.token, "claim")).status).toBe(401);
+    session.current = OTHER;
+    expect((await act(one.card.token, "claim")).status).toBe(200);
+    session.current = null;
+    expect((await act(one.card.token, "delete")).status).toBe(401);
+    session.current = OWNER;
+    expect((await act(one.card.token, "hide")).status).toBe(403);
+    expect((await act(one.card.token, "claim")).status).toBe(409);
+    session.current = OTHER;
+    const exported = await (await exportMe()).json();
+    expect(exported.received_cards).toHaveLength(1);
+    expect(exported.received_cards[0].message).toBe("TEST DATA message");
+    expect((await erase(form({ confirm: "on" }, "application/json"))).status).toBe(200);
+    const erased = await prisma.card.findUniqueOrThrow({ where: { id: one.card.id } });
+    expect(erased).toMatchObject({ status: "deleted", message: "" });
+    expect((await act(one.card.token, "show")).status).toBe(404);
+
+    // Card 2: reported by the link holder, content cleared, can't be undone.
+    const two = await make();
+    const reported = await act(two.card.token, "report", "text/html");
+    expect(reported.headers.get("location")).toBe("http://localhost/card/removed");
+    expect(await prisma.card.findUniqueOrThrow({ where: { id: two.card.id } })).toMatchObject({ status: "reported", message: "" });
+    expect((await act(two.card.token, "show")).status).toBe(404);
+
+    // Card 3: deleted by the sender with the private manage token.
+    const three = await make();
+    expect((await manage(form({ manage_token: "x".repeat(43), action: "delete" }, "application/json"))).status).toBe(404);
+    expect((await manage(form({ manage_token: three.manageToken, action: "delete" }, "application/json"))).status).toBe(200);
+    expect(await prisma.card.findUniqueOrThrow({ where: { id: three.card.id } })).toMatchObject({ status: "deleted", message: "" });
+    expect((await manage(form({ manage_token: three.manageToken, action: "delete" }, "application/json"))).status).toBe(404);
   });
 });

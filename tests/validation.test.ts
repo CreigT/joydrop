@@ -13,12 +13,12 @@ describe("validateContributionFile", () => {
     expect(validateContributionFile(mockFile(0, "image/jpeg"), "photo")).toBeNull();
   });
 
-  it("rejects files larger than 10 MB", () => {
-    const big = mockFile(11 * 1024 * 1024, "image/jpeg");
+  it("rejects files larger than 4 MB", () => {
+    const big = mockFile(5 * 1024 * 1024, "image/jpeg");
     expect(validateContributionFile(big, "photo")).toContain("File too large");
   });
 
-  it("accepts files under 10 MB with allowed type", () => {
+  it("accepts files under 4 MB with allowed type", () => {
     const ok = mockFile(1 * 1024 * 1024, "image/jpeg");
     expect(validateContributionFile(ok, "photo")).toBeNull();
   });
