@@ -2,6 +2,26 @@
 
 **Sponsored by CREIGNIFICENT LLC**
 
+## v0.1.2 — 2026-11-02
+
+### Removed
+- AI speech feature: the "Generate AI Speech" button, `/api/generate`, the OpenAI and ElevenLabs calls (`lib/ai.ts`), the speech on the Birthday Bridge page, in the PDF, and in the public JSON, and speech approval on the dashboard. `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, and `ELEVENLABS_VOICE_ID` are no longer used. Old speech rows in the database are left in place, are never shown, and are still covered by export and erase.
+
+### Fixed
+- `POST /api/me` (erase form): returns 401 for signed-out callers before checking the confirm box (it returned 400 first).
+- Unlock time: pages now unlock at midnight Pacific Time on the birthday (handles daylight saving) instead of midnight UTC (4–5 pm Pacific the day before).
+- Pages no longer need an approved speech to unlock; the daily cron and the unlock route unlock any due, visible, unpaused page.
+- Daily cron no longer marks every message older than 90 days as deleted (that could wipe a page's content before the birthday). It now marks only never-approved messages older than 365 days.
+- Dashboard shows attached photos, GIFs, voice notes, and videos so the owner can see what they approve.
+
+### Changed
+- Copy updated everywhere the AI speech was mentioned (landing, opt-in consent, invite page and consent, privacy, terms, README). Privacy no longer lists OpenAI or ElevenLabs and states that messages are not sent to any AI service. The page and dashboard state the Pacific Time unlock.
+- `npm run build` applies Prisma migrations first when a database is configured (`scripts/migrate-if-configured.mjs`), so the database schema is created by the deploy without anyone handling the connection string.
+
+### Tests
+- Erase-form 401 ordering, cron unlock without a speech, Pacific Time unlock dates (standard and daylight time).
+- `tests/flow.db.test.ts`: full flow on a real Postgres database (run with `TEST_DATABASE_URL`).
+
 ## v0.1.1 — 2026-11-02
 
 ### Security fixes

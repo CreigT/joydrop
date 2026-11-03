@@ -35,7 +35,7 @@ export default function Home({
               {[
                 "Sign in and opt in, then share your personal invite link with friends",
                 "Friends send text, voice, photo, video, or GIF messages; you approve which ones are used",
-                "Optionally generate an AI voice speech from approved messages; your Birthday Bridge page unlocks on your birthday"
+                "Your Birthday Bridge page unlocks at midnight Pacific Time on your birthday and shows the messages you approved"
               ].map((step, index) => (
                 <div
                   className="rounded-2xl bg-white/85 p-4 shadow-sm ring-1 ring-white/70"
@@ -52,8 +52,7 @@ export default function Home({
             </div>
             <div className="rounded-2xl bg-white/85 p-5 text-sm font-semibold leading-relaxed text-[#463B52] shadow-sm ring-1 ring-white/70">
               Pause anytime from your dashboard. Nothing goes on your page until you
-              approve it, and AI speech drafts stay drafts until you approve them.
-              We don&apos;t sell your data. Heads up: because you approve messages,
+              approve it. We don&apos;t sell your data. Heads up: because you approve messages,
               you will see them before your birthday. JoyDrop does not send email or
               text messages.
             </div>
@@ -181,7 +180,7 @@ export default function Home({
                   required
                   type="checkbox"
                 />
-                I consent to AI creating birthday surprises for me
+                Messages I approve can appear on my Birthday Bridge page when it unlocks, and anyone with the page link can see them
               </label>
               <label className="flex gap-3 rounded-2xl bg-bg/70 p-4 text-sm font-semibold leading-relaxed text-[#463B52]">
                 <input

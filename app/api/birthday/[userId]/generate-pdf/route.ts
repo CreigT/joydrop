@@ -23,16 +23,6 @@ async function buildPdf(userId: string) {
           soft_delete: false
         }
       },
-      surprises: {
-        where: {
-          soft_delete: false,
-          status: { in: ["approved", "sent"] }
-        },
-        orderBy: {
-          scheduled_for: "desc"
-        },
-        take: 1
-      },
       guestbook: {
         where: {
           soft_delete: false
@@ -57,7 +47,6 @@ async function buildPdf(userId: string) {
           null,
           React.createElement(Text, { style: { fontSize: 28, marginBottom: 18 } }, "JoyDrop Memory Book"),
           React.createElement(Text, { style: { fontSize: 18, marginBottom: 12 } }, user.name),
-          React.createElement(Text, { style: { marginBottom: 18 } }, user.surprises[0]?.script_text ?? "No approved speech yet."),
           React.createElement(Text, { style: { fontSize: 16, marginBottom: 8 } }, "Photos and Messages"),
           ...user.contributions.map((contribution) =>
             React.createElement(

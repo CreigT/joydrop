@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { isValidBirthdayMmDd, isValidEmail, parseAmount, isContributionType } from "@/lib/input";
 import { safeNextPath } from "@/lib/safe-redirect";
-import { isPageOpen, isSurprisePublishable } from "@/lib/birthday-page";
+import { isPageOpen } from "@/lib/birthday-page";
+import { birthdayUnlockDate } from "@/lib/dates";
 
 describe("safeNextPath", () => {
   it("keeps same-site paths", () => {
@@ -43,10 +44,20 @@ describe("birthday page rules", () => {
     expect(isPageOpen({ isLocked: true, unlockAt: past })).toBe(true);
     expect(isPageOpen({ isLocked: true, unlockAt: future })).toBe(false);
   });
-  it("only shows approved or sent speeches", () => {
-    expect(isSurprisePublishable({ status: "draft" })).toBe(false);
-    expect(isSurprisePublishable({ status: "approved" })).toBe(true);
-    expect(isSurprisePublishable({ status: "sent", soft_delete: true })).toBe(false);
-    expect(isSurprisePublishable(null)).toBe(false);
+});
+
+describe("birthday unlock time", () => {
+  it("unlocks at midnight Pacific Time (standard and daylight time)", () => {
+    const now = new Date("2026-11-03T05:00:00Z");
+    // Dec 25 is PST (UTC-8): midnight Pacific = 08:00 UTC
+    expect(birthdayUnlockDate("12-25", now).toISOString()).toBe("2026-12-25T08:00:00.000Z");
+    // Jul 4 is PDT (UTC-7), next year
+    expect(birthdayUnlockDate("07-04", now).toISOString()).toBe("2027-07-04T07:00:00.000Z");
+  });
+  it("keeps today's date while it is still the birthday in Pacific Time", () => {
+    // 2026-11-03 05:00 UTC is still Nov 2 in Los Angeles
+    const now = new Date("2026-11-03T05:00:00Z");
+    expect(birthdayUnlockDate("11-02", now).toISOString()).toBe("2026-11-02T08:00:00.000Z");
+    expect(birthdayUnlockDate("11-01", now).toISOString()).toBe("2027-11-01T07:00:00.000Z");
   });
 });

@@ -101,6 +101,11 @@ export async function DELETE() {
 
 /** HTML form fallback for the dashboard "Erase my data" button. */
 export async function POST(request: Request) {
+  // Sign-in is checked before anything else, so anonymous callers always get 401.
+  if (!(await getCurrentFirebaseUser())) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const formData = await request.formData().catch(() => null);
   if (String(formData?.get("confirm") ?? "") !== "on") {
     return Response.json({ error: "Tick the confirmation box to erase your data." }, { status: 400 });

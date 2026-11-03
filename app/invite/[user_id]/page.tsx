@@ -44,8 +44,8 @@ export default async function InvitePage({
             {formatBirthday(user.birthday_mm_dd)}.
           </p>
           <p className="mt-3 text-sm font-semibold text-[#6A6074]">
-            Approved message text may also be used to write an AI voice speech.
-            Files up to 10 MB.
+            {user.name} will see your message when reviewing it, before the
+            birthday. Files up to 10 MB.
           </p>
           {user.paused_bool ? (
             <p className="mt-3 rounded-2xl bg-accent/60 p-3 text-sm font-semibold text-[#30273A]">
@@ -137,8 +137,8 @@ export default async function InvitePage({
                 type="checkbox"
               />
               I have the right to share what I&apos;m sending, and I give JoyDrop
-              permission to show it on {user.name}&apos;s birthday page and use my
-              message text in an AI-written speech for {user.name}
+              permission to show it to {user.name} and, if approved, on{" "}
+              {user.name}&apos;s birthday page, which anyone with the link can view
             </label>
             <button
               className="w-full rounded-2xl bg-primary px-5 py-3 font-heading font-black text-white shadow-lg shadow-primary/30"

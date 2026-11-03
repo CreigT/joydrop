@@ -11,6 +11,7 @@ const db = vi.hoisted(() => ({
   },
   birthdayPage: {
     findUnique: vi.fn(),
+    findMany: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
     upsert: vi.fn()
@@ -36,7 +37,7 @@ vi.mock("@/lib/database", () => ({
 import { GET as pauseGet, POST as pausePost } from "@/app/api/pause/route";
 import { POST as privacyPost } from "@/app/api/birthday/[userId]/privacy/route";
 import { GET as exportGet } from "@/app/api/me/export/route";
-import { DELETE as meDelete } from "@/app/api/me/route";
+import { DELETE as meDelete, POST as mePost } from "@/app/api/me/route";
 import { POST as guestbookPost } from "@/app/api/birthday/[userId]/guestbook/route";
 import { GET as pdfGet } from "@/app/api/birthday/[userId]/generate-pdf/route";
 import { GET as publicPageGet } from "@/app/api/birthday/[userId]/route";
@@ -102,6 +103,14 @@ describe("/api/pause", () => {
   it("no longer changes anything on GET", async () => {
     const res = pauseGet();
     expect(res.status).toBe(405);
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+
+  it("erase form returns 401 before the confirm check when not signed in", async () => {
+    const res = await mePost(form("http://x/api/me", {}));
+    expect(res.status).toBe(401);
+    session.current = { uid: "uid_owner" };
+    expect((await mePost(form("http://x/api/me", {}))).status).toBe(400);
     expect(db.user.update).not.toHaveBeenCalled();
   });
 });
@@ -182,7 +191,6 @@ describe("visitor writes and public reads respect the lock", () => {
     unlockAt: future,
     soft_delete: false,
     user: { ...OWNER, name: "Sam", email: "sam@example.com" },
-    surprise: { status: "draft", script_text: "secret", audio_url: null }
   };
 
   it("guestbook refuses entries on a locked page", async () => {
@@ -223,6 +231,24 @@ describe("/api/cron/daily", () => {
     expect(
       (await cronGet(new Request("http://x/api/cron/daily", { headers: { authorization: "Bearer nope" } }))).status
     ).toBe(401);
+    vi.unstubAllEnvs();
+  });
+
+  it("with the bearer secret, unlocks due pages without needing a speech", async () => {
+    vi.stubEnv("CRON_SECRET", "s3cret-test-value");
+    vi.stubEnv("DATABASE_URL", "postgres://test");
+    db.contribution.updateMany.mockResolvedValue({ count: 0 });
+    db.birthdayPage.findMany.mockResolvedValue([{ id: "page1", userId: OWNER.id }]);
+    const res = await cronGet(
+      new Request("http://x/api/cron/daily", { headers: { authorization: "Bearer s3cret-test-value" } })
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, unlocked: 1, expiredUnapproved: 0 });
+    const where = db.birthdayPage.findMany.mock.calls[0][0].where;
+    expect(where).not.toHaveProperty("surprise");
+    expect(where.user).toEqual({ paused_bool: false, soft_delete: false });
+    expect(db.contribution.updateMany.mock.calls[0][0].where.isApproved).toBe(false);
+    expect(db.birthdayPage.update).toHaveBeenCalledWith({ where: { id: "page1" }, data: { isLocked: false } });
     vi.unstubAllEnvs();
   });
 });

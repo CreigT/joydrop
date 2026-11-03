@@ -12,9 +12,8 @@ export default function TermsPage() {
             right and permission to share.
           </p>
           <p>
-            AI speech drafts stay drafts until the birthday person approves them.
-            Approved messages and speeches appear on the Birthday Bridge page when
-            it unlocks. JoyDrop does not send email or text messages, and the gift
+            Messages appear on the Birthday Bridge page only after the birthday
+            person approves them, and only once the page unlocks. JoyDrop does not send email or text messages, and the gift
             tracker does not handle money.
           </p>
           <p>

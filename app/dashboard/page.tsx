@@ -2,20 +2,10 @@ import { redirect } from "next/navigation";
 import { hasDatabaseUrl } from "@/lib/database";
 import { formatBirthday } from "@/lib/dates";
 
-const ERRORS: Record<string, string> = {
-  ai_unavailable:
-    "The AI speech could not be generated right now. The AI services may not be set up yet. Nothing was changed.",
-  no_approved_messages: "Approve at least one friend message before generating a speech."
-};
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 
-export default async function DashboardPage({
-  searchParams
-}: {
-  searchParams: { error?: string };
-}) {
-  const errorMessage = searchParams.error ? ERRORS[searchParams.error] : undefined;
+export default async function DashboardPage() {
   const session = await getCurrentFirebaseUser();
 
   if (!session) {
@@ -54,14 +44,6 @@ export default async function DashboardPage({
         orderBy: {
           created_at: "desc"
         }
-      },
-      surprises: {
-        where: {
-          soft_delete: false
-        },
-        orderBy: {
-          scheduled_for: "desc"
-        }
       }
     }
   });
@@ -90,15 +72,7 @@ export default async function DashboardPage({
               .
             </p>
           ) : null}
-          {errorMessage ? (
-            <p className="rounded-2xl bg-accent/60 p-4 text-sm font-semibold text-[#30273A]">
-              {errorMessage}
-            </p>
-          ) : null}
           {users.map((user) => {
-            const latestDraft = user.surprises.find(
-              (surprise) => surprise.status === "draft" || surprise.status === "approved"
-            );
             return (
               <article
                 className="rounded-2xl bg-white/90 p-5 shadow-xl ring-1 ring-white/80"
@@ -131,6 +105,10 @@ export default async function DashboardPage({
                           /birthday/{user.id}
                         </a>
                       </p>
+                      <p>
+                        It unlocks at midnight Pacific Time on your birthday and shows
+                        only the messages you approve below.
+                      </p>
                     </div>
                     <form action="/api/pause" className="mt-4" method="post">
                       <input name="user_id" type="hidden" value={user.id} />
@@ -145,20 +123,6 @@ export default async function DashboardPage({
                       >
                         {user.paused_bool ? "Resume JoyDrop" : "Pause JoyDrop"}
                       </button>
-                    </form>
-                    <form action="/api/generate" className="mt-5" method="post">
-                      <input name="user_id" type="hidden" value={user.id} />
-                      <button
-                        className="rounded-2xl bg-primary px-5 py-3 font-heading font-black text-white shadow-lg shadow-primary/30"
-                        type="submit"
-                      >
-                        Generate AI Speech
-                      </button>
-                      <p className="mt-2 text-xs font-semibold text-[#463B52]">
-                        Uses only approved messages. Message text is sent to OpenAI to
-                        write the speech and to ElevenLabs to create the voice. The
-                        result is a draft until you approve it.
-                      </p>
                     </form>
                     <div className="mt-6 space-y-3 rounded-2xl bg-bg/70 p-4 text-sm text-[#463B52]">
                       <p className="font-bold text-[#30273A]">Your data</p>
@@ -195,6 +159,10 @@ export default async function DashboardPage({
                               {contribution.contributor_name}
                             </p>
                             <p>{contribution.message_text}</p>
+                            <ContributionMedia
+                              src={contribution.fileUrl ?? contribution.photo_url ?? contribution.voice_url}
+                              type={contribution.type}
+                            />
                             {!contribution.isApproved ? (
                               <form action="/api/approve" className="mt-3" method="post">
                                 <input
@@ -224,37 +192,6 @@ export default async function DashboardPage({
                       </div>
                     </div>
 
-                    {latestDraft ? (
-                      <form
-                        action="/api/approve"
-                        className="space-y-3 rounded-2xl bg-secondary/20 p-4"
-                        method="post"
-                      >
-                        <input
-                          name="surprise_id"
-                          type="hidden"
-                          value={latestDraft.id}
-                        />
-                        <label className="block text-sm font-bold text-[#30273A]">
-                          {latestDraft.status === "draft" ? "AI Draft (not approved yet)" : "Approved speech"}
-                          <textarea
-                            className="mt-2 min-h-40 w-full resize-y rounded-2xl border border-white/70 bg-white/85 px-4 py-3 text-sm shadow-sm outline-none transition focus:border-secondary focus:ring-4 focus:ring-secondary/20"
-                            name="script_text"
-                            defaultValue={latestDraft.script_text}
-                          />
-                        </label>
-                        <button
-                          className="rounded-2xl bg-secondary px-5 py-3 font-heading font-black text-[#173B3A] shadow-lg shadow-secondary/30"
-                          type="submit"
-                        >
-                          Approve speech
-                        </button>
-                        <p className="text-xs font-semibold text-[#463B52]">
-                          Editing the text changes the transcript shown on your page. It
-                          does not re-record the voice audio.
-                        </p>
-                      </form>
-                    ) : null}
                   </div>
                 </div>
               </article>
@@ -264,4 +201,19 @@ export default async function DashboardPage({
       </section>
     </main>
   );
+}
+
+/* eslint-disable @next/next/no-img-element */
+function ContributionMedia({ src, type }: { src: string | null; type: string }) {
+  if (!src) return null;
+  if (type === "photo" || type === "gif") {
+    return <img alt="Attached file" className="mt-2 max-h-48 rounded-xl" src={src} />;
+  }
+  if (type === "voice") {
+    return <audio className="mt-2 w-full" controls src={src} />;
+  }
+  if (type === "video") {
+    return <video className="mt-2 max-h-48 w-full rounded-xl" controls src={src} />;
+  }
+  return null;
 }

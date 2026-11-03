@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
-import { birthdayUnlockDate } from "@/lib/dates";
+import { birthdayUnlockDate, DEFAULT_TIMEZONE } from "@/lib/dates";
 import { isValidBirthdayMmDd, isValidEmail, LIMITS, tooLong } from "@/lib/input";
 import { prisma } from "@/lib/prisma";
 import { displayNameFromToken, getCurrentFirebaseUser } from "@/lib/session";
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       name: name || displayNameFromToken(firebaseUser),
       email,
       birthday_mm_dd: birthday,
-      timezone: "America/Los_Angeles",
+      timezone: DEFAULT_TIMEZONE,
       birthday_page: {
         create: {
           unlockAt: birthdayUnlockDate(birthday)

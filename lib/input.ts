@@ -4,7 +4,6 @@ export const LIMITS = {
   message: 2000,
   guestbookMessage: 1000,
   giftTitle: 120,
-  script: 5000,
   giftAmountMax: 1_000_000
 } as const;
 

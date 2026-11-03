@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { isPageOpen, isSurprisePublishable } from "@/lib/birthday-page";
+import { isPageOpen } from "@/lib/birthday-page";
 import { hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
@@ -37,8 +37,7 @@ export default async function BirthdayPage({
         userId: params.userId
       },
       include: {
-        user: true,
-        surprise: true
+        user: true
       }
     })
     .catch(() => null);
@@ -133,16 +132,6 @@ export default async function BirthdayPage({
         viewCount: page.viewCount,
         isOwner
       }}
-      surprise={
-        open && isSurprisePublishable(page.surprise) && page.surprise
-          ? {
-              script_text: page.surprise.script_text,
-              audio_url: page.surprise.audio_url,
-              video_url: page.surprise.video_url,
-              status: page.surprise.status
-            }
-          : null
-      }
       user={{
         name: page.user.name,
         birthday_mm_dd: page.user.birthday_mm_dd

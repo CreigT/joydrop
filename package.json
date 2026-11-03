@@ -1,11 +1,11 @@
 {
   "name": "joydrop",
-  "version": "0.1.1",
-  "description": "Permission-first AI birthday automation app with opt-in invites, reviewed AI surprises, and a Birthday Bridge memory page.",
+  "version": "0.1.2",
+  "description": "Permission-first birthday pages built from friends' messages that the birthday person approves.",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/migrate-if-configured.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",

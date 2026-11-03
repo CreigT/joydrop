@@ -9,28 +9,27 @@ export default function PrivacyPage() {
           <p>
             JoyDrop collects what you give it: your name, email, and birthday
             (month and day only), plus messages and files friends send through
-            your invite link. It uses them only to build your Birthday Bridge page
-            and, if you choose, an AI speech.
+            your invite link. It uses them only to build your Birthday Bridge page.
           </p>
           <p>
             <strong>Services we use.</strong> Sign-in is handled by Google Firebase.
             Uploaded files are stored in Firebase Storage (or in our database if
-            storage is unavailable). The site runs on Vercel. When you click
-            &quot;Generate AI Speech,&quot; the text of your approved messages is sent
-            to OpenAI to write the speech and to ElevenLabs to create the voice.
+            storage is unavailable). The site runs on Vercel, and account and
+            page data is stored in a hosted Postgres database. JoyDrop does
+            not send your messages to any AI service.
           </p>
           <p>
             <strong>Who can see what.</strong> Your dashboard is visible only to you.
             Your Birthday Bridge page can be opened by anyone who has its link, but
             it shows only messages you approved, and only after it unlocks on your
-            birthday. Pages are hidden from search engines unless you turn that on.
+            birthday (midnight Pacific Time). Pages are hidden from search engines unless you turn that on.
           </p>
           <p>
             <strong>Your controls.</strong> From your dashboard you can pause JoyDrop,
             download your data, or erase it. Erasing hides your account, messages,
             and page everywhere in the app; the records are kept in the database
-            marked as deleted (soft delete). Contributions older than 90 days are
-            also marked deleted automatically unless a surprise was delivered.
+            marked as deleted (soft delete). Friend messages you never approve are
+            marked deleted automatically after 365 days.
           </p>
           <p>We don&apos;t sell your data.</p>
         </div>

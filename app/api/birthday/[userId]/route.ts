@@ -1,4 +1,4 @@
-import { isPageOpen, isSurprisePublishable } from "@/lib/birthday-page";
+import { isPageOpen } from "@/lib/birthday-page";
 import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
@@ -20,8 +20,7 @@ export async function GET(
       userId: params.userId
     },
     include: {
-      user: true,
-      surprise: true
+      user: true
     }
   });
 
@@ -37,7 +36,7 @@ export async function GET(
   };
 
   if (!open) {
-    return Response.json({ page: summary, contributions: [], guestbook: [], gifts: [], surprise: null });
+    return Response.json({ page: summary, contributions: [], guestbook: [], gifts: [] });
   }
 
   const [contributions, guestbook, gifts] = await Promise.all([
@@ -64,9 +63,5 @@ export async function GET(
     })
   ]);
 
-  const surprise = isSurprisePublishable(page.surprise)
-    ? { script_text: page.surprise!.script_text, audio_url: page.surprise!.audio_url }
-    : null;
-
-  return Response.json({ page: summary, contributions, guestbook, gifts, surprise });
+  return Response.json({ page: summary, contributions, guestbook, gifts });
 }

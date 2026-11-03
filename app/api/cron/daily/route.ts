@@ -1,6 +1,11 @@
-import { sendBirthdaySurprise } from "@/lib/delivery";
 import { prisma } from "@/lib/prisma";
 
+/**
+ * Daily job (Vercel Cron, Bearer CRON_SECRET only):
+ * 1. Unlocks Birthday Bridge pages whose unlock time has passed.
+ * 2. Marks friend messages that were never approved and are older than
+ *    365 days as deleted (data minimisation).
+ */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
 
@@ -25,105 +30,47 @@ export async function GET(request: Request) {
     );
   }
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 90);
+  const now = new Date();
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - 365);
 
-  await prisma.contribution.updateMany({
+  const expired = await prisma.contribution.updateMany({
     where: {
-      created_at: {
-        lt: cutoff
-      },
-      soft_delete: false,
-      user: {
-        surprises: {
-          none: {
-            status: "sent"
-          }
-        }
-      }
+      created_at: { lt: cutoff },
+      isApproved: false,
+      soft_delete: false
     },
-    data: {
-      soft_delete: true
-    }
+    data: { soft_delete: true }
   });
-
-  const surprises = await prisma.surprise.findMany({
-    where: {
-      status: "approved",
-      soft_delete: false,
-      user: {
-        paused_bool: false,
-        soft_delete: false
-      }
-    },
-    include: {
-      user: true
-    }
-  });
-
-  let sent = 0;
-  let unlocked = 0;
 
   const birthdayPages = await prisma.birthdayPage.findMany({
     where: {
-      unlockAt: {
-        lte: new Date()
-      },
+      unlockAt: { lte: now },
       isLocked: true,
       soft_delete: false,
-      surprise: {
-        status: "approved"
-      },
       user: {
         paused_bool: false,
         soft_delete: false
       }
     },
-    include: {
-      user: true,
-      surprise: true
-    }
+    select: { id: true, userId: true }
   });
 
+  let unlocked = 0;
   for (const page of birthdayPages) {
     await prisma.birthdayPage.update({
-      where: {
-        id: page.id
-      },
-      data: {
-        isLocked: false
-      }
+      where: { id: page.id },
+      data: { isLocked: false }
     });
     await prisma.auditLog.create({
       data: {
         action: "birthday_bridge_unlocked",
         user_id: page.userId,
-        meta_json: {
-          channel: "birthday_page"
-        }
+        meta_json: { channel: "birthday_page" }
       }
     });
     unlocked += 1;
   }
 
-  for (const surprise of surprises) {
-    const page = birthdayPages.find((item) => item.userId === surprise.user_id);
-    if (!page) {
-      continue;
-    }
-
-    await sendBirthdaySurprise(surprise.user_id, surprise.id);
-    await prisma.surprise.update({
-      where: {
-        id: surprise.id
-      },
-      data: {
-        status: "sent",
-        sent_at: new Date()
-      }
-    });
-    sent += 1;
-  }
-
-  return Response.json({ sent, unlocked });
+  return Response.json({ ok: true, unlocked, expiredUnapproved: expired.count });
 }

@@ -14,7 +14,6 @@ export async function POST(
       userId: params.userId
     },
     include: {
-      surprise: true,
       user: true
     }
   });
@@ -24,8 +23,7 @@ export async function POST(
     page.soft_delete ||
     page.user.soft_delete ||
     page.user.paused_bool ||
-    page.unlockAt > new Date() ||
-    page.surprise?.status !== "approved"
+    page.unlockAt > new Date()
   ) {
     return Response.json({ unlocked: false });
   }

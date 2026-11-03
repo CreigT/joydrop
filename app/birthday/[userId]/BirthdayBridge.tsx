@@ -48,12 +48,6 @@ type Props = {
     name: string;
     birthday_mm_dd: string;
   };
-  surprise: {
-    script_text: string;
-    audio_url: string | null;
-    video_url: string | null;
-    status: string;
-  } | null;
   contributions: Contribution[];
   guestbook: GuestbookEntry[];
   gifts: Gift[];
@@ -81,14 +75,12 @@ function relativeTime(date: string) {
 export function BirthdayBridge({
   page,
   user,
-  surprise,
   contributions,
   guestbook,
   gifts
 }: Props) {
   const [countdown, setCountdown] = useState(() => timeLeft(page.unlockAt));
   const [selected, setSelected] = useState<Contribution | null>(null);
-  const [showTranscript, setShowTranscript] = useState(false);
   const unlocked = !page.isLocked;
   const reachedUnlockTime = countdown.diff === 0;
 
@@ -125,7 +117,7 @@ export function BirthdayBridge({
             JoyDrop
           </p>
           <h1 className="mt-6 font-heading text-4xl font-black sm:text-6xl">
-            {unlocked ? "Surprise Unlocked!" : `Happy Birthday, ${user.name}!`}
+            {unlocked ? `Happy Birthday, ${user.name}!` : `${user.name}'s birthday page`}
           </h1>
           {!unlocked ? (
             <div className="mt-6 grid grid-cols-4 gap-3 text-center">
@@ -157,54 +149,10 @@ export function BirthdayBridge({
             <div className="rounded-2xl bg-white/90 px-5 py-3 font-heading font-black text-[#30273A] shadow-xl">
               {reachedUnlockTime
                 ? "It's time! Refresh the page to see it."
-                : `Unlocks on ${user.name}'s birthday`}
+                : `Unlocks at midnight Pacific Time on ${user.name}'s birthday`}
             </div>
           </div>
         ) : null}
-
-        <section className="rounded-2xl bg-white/90 p-5 shadow-xl ring-1 ring-white/80">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-heading text-2xl font-black text-[#30273A]">
-              AI Birthday Speech
-            </h2>
-            <button
-              className="rounded-2xl bg-accent px-4 py-2 text-sm font-black text-[#30273A]"
-              onClick={() => setShowTranscript((value) => !value)}
-              type="button"
-            >
-              Read Transcript
-            </button>
-          </div>
-          {surprise?.audio_url ? (
-            <div className="mt-5">
-              <div className="mb-4 flex h-14 items-center gap-2">
-                {Array.from({ length: 24 }, (_, index) => (
-                  <div
-                    className="w-full rounded-full bg-secondary"
-                    key={index}
-                    style={{ height: `${16 + (index % 5) * 8}px` }}
-                  />
-                ))}
-              </div>
-              <audio className="w-full" controls src={surprise.audio_url} />
-            </div>
-          ) : (
-            <p className="mt-4 text-sm font-semibold text-[#463B52]">
-              No approved speech yet.
-            </p>
-          )}
-          {surprise ? (
-            <p className="mt-3 text-xs font-semibold text-[#6A6074]">
-              This speech was written and voiced by AI from friends&apos; messages,
-              then approved by {user.name}.
-            </p>
-          ) : null}
-          {showTranscript && surprise ? (
-            <p className="mt-4 rounded-2xl bg-bg/70 p-4 text-sm leading-7 text-[#463B52]">
-              {surprise.script_text}
-            </p>
-          ) : null}
-        </section>
 
         <section>
           <h2 className="font-heading text-2xl font-black text-[#30273A]">

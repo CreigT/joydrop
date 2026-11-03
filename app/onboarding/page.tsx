@@ -104,7 +104,7 @@ export default async function OnboardingPage() {
               required
               type="checkbox"
             />
-            I consent to AI creating birthday surprises for me
+            Messages I approve can appear on my Birthday Bridge page when it unlocks, and anyone with the page link can see them
           </label>
           <label className="flex gap-3 rounded-2xl bg-bg/70 p-4 text-sm font-semibold leading-relaxed text-[#463B52]">
             <input

@@ -19,20 +19,21 @@ Covered in `tests/validation.test.ts`:
 
 ### 2. Unauthorized Access Blocked
 - Access `/dashboard` without session cookie → redirect to `/login`
-- Call `/api/generate` or `/api/approve` without session → blocked by middleware
+- Call `/api/approve` without session → blocked by middleware
 
 ### 3. Cron Secret Enforcement
 - Call `/api/cron/daily` without secret in production → 401
 - Call with correct `Authorization: Bearer <CRON_SECRET>` → 200 (`?secret=` is no longer accepted → 401)
 
 ### 4. Pause / Kill
-- Signed in, click "Pause JoyDrop" on the dashboard (POST `/api/pause`) → cron skips user for unlock and surprise send; invite form refuses new messages
+- Signed in, click "Pause JoyDrop" on the dashboard (POST `/api/pause`) → cron skips user for unlock; invite form refuses new messages
 - Unauthenticated POST `/api/pause` → 401; another user's `user_id` → 403; GET → 405
-- Soft-delete path works for old contributions
+- Unapproved contributions older than 365 days are soft-deleted by the cron
 
 ### 5. Unlock Timing
 - Birthday page remains locked before unlockAt
-- Unlocks only when unlockAt <= now AND surprise approved AND not paused
+- unlockAt is midnight Pacific Time on the birthday
+- Unlocks when unlockAt <= now AND the page is not hidden AND the user is not paused (no speech required)
 
 ## How to Run Automated Tests
 ```bash

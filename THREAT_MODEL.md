@@ -1,19 +1,18 @@
 # JoyDrop Threat Model
 
 **Sponsored by CREIGNIFICENT LLC**  
-**System:** Permission-first AI birthday automation  
-**Date:** 2026-11-02 (updated for v0.1.1)
+**System:** Permission-first birthday pages  
+**Date:** 2026-11-02 (updated for v0.1.2)
 
 ## Assets
 - User PII (name, email, birthday)
 - Contribution content (text, voice, photo, video, GIF)
-- AI-generated speech/audio
 - Birthday Bridge page and unlock state
 - Audit logs
 
 ## Trust Boundaries
 - Public internet → Opt-in and invite contribution forms (unauthenticated)
-- Authenticated session → Dashboard, generate, approve routes
+- Authenticated session → Dashboard and approve route
 - Cron route → Protected by CRON_SECRET
 - Firebase Auth + session cookie → Protected routes
 - Database (Prisma/PostgreSQL) → Soft-delete and audit trail
@@ -28,7 +27,6 @@
 - Public opt-in and contribute endpoints
 - File uploads (size, type, content)
 - Invite links
-- AI generation and ElevenLabs calls
 - Cron unlock route
 - Session cookie and Firebase token
 
@@ -41,14 +39,20 @@
 - **Open redirect / script injection after login** via `?next=`. Now same-site paths only.
 - **Secret in URL** for cron. Now header only.
 
+## Changes in v0.1.2
+- **AI speech removed**: no OpenAI or ElevenLabs calls, `/api/generate` deleted, speech removed from the dashboard, page, PDF, and public JSON. Removes a third-party data flow and a cost/abuse surface.
+- **Erase form** now returns 401 before checking the confirm box.
+- **Unlock time** is midnight Pacific Time (DST-aware) instead of UTC midnight; pages unlock without needing a speech.
+- **Data retention**: the cron now marks only never-approved messages older than 365 days as deleted (it used to delete all messages older than 90 days unless a speech was sent, which could remove a page's content before the birthday).
+
 ## Controls (Current + Planned)
 - Explicit consent checkboxes required
-- Firebase Auth + middleware on dashboard/generate/approve
+- Firebase Auth + middleware on dashboard/approve
 - Soft-delete and audit logging
 - CRON_SECRET on daily unlock
 - Upload size and MIME type validation (added)
 - Basic rate limiting on contribute (added)
-- Pause flag stops unlocks, surprises, and new contributions
+- Pause flag stops unlocks and new contributions
 - Ownership checks on every account-changing route (401 / 403)
 - Input validation and length limits on all public forms
 - Content withheld server-side until the page unlocks
@@ -56,7 +60,7 @@
 
 ## Residual Risks
 - In-memory rate limiting is not durable across serverless instances
-- No content moderation on AI-generated speech beyond admin review
+- No automated moderation of friend content beyond owner review
 - File content is not scanned for malware
 - Public invite links can be shared widely
 - No automated alerting on anomalous activity

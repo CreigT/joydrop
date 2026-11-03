@@ -1,0 +1,171 @@
+/**
+ * End-to-end flow against a real Postgres database.
+ * Runs only when TEST_DATABASE_URL is set (e.g. a throwaway local database);
+ * skipped otherwise. Only sign-in is simulated.
+ */
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+
+const TEST_DB = process.env.TEST_DATABASE_URL;
+if (TEST_DB) process.env.DATABASE_URL = TEST_DB;
+
+const session = vi.hoisted(() => ({ current: null as null | { uid: string; email?: string } }));
+vi.mock("@/lib/session", () => ({
+  getCurrentFirebaseUser: async () => session.current,
+  displayNameFromToken: () => "Friend"
+}));
+
+const run = TEST_DB ? describe : describe.skip;
+
+function form(fields: Record<string, string>, accept = "text/html") {
+  const body = new FormData();
+  for (const [k, v] of Object.entries(fields)) body.set(k, v);
+  return new Request("http://localhost/x", {
+    method: "POST",
+    body,
+    headers: { accept, "x-forwarded-for": `10.0.0.${Math.floor(Math.random() * 250)}` }
+  });
+}
+
+/** next/navigation redirect() throws; return its target instead. */
+async function followRedirect(fn: () => Promise<unknown>) {
+  try {
+    const res = await fn();
+    return { res: res as Response, location: (res as Response).headers.get("location") };
+  } catch (error) {
+    const digest = (error as { digest?: string }).digest ?? "";
+    if (!digest.startsWith("NEXT_REDIRECT")) throw error;
+    return { res: null, location: digest.split(";")[2] };
+  }
+}
+
+run("JoyDrop flow on a real database", () => {
+  const OWNER = { uid: "test_owner_uid", email: "joydrop-test-owner@example.com" };
+  const OTHER = { uid: "test_other_uid", email: "joydrop-test-other@example.com" };
+  let prisma: typeof import("@/lib/prisma").prisma;
+  let userId = "";
+
+  beforeAll(async () => {
+    ({ prisma } = await import("@/lib/prisma"));
+    await prisma.user.deleteMany({ where: { firebaseUid: { in: [OWNER.uid, OTHER.uid] } } });
+  });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { firebaseUid: { in: [OWNER.uid, OTHER.uid] } } });
+    await prisma.$disconnect();
+  });
+
+  it("opts in, collects a message, approves it, and unlocks on the birthday", async () => {
+    const { POST: optin } = await import("@/app/api/optin/route");
+    const { POST: contribute } = await import("@/app/api/contribute/route");
+    const { POST: approve } = await import("@/app/api/approve/route");
+    const { GET: publicPage } = await import("@/app/api/birthday/[userId]/route");
+    const { GET: cron } = await import("@/app/api/cron/daily/route");
+    const { POST: guestbook } = await import("@/app/api/birthday/[userId]/guestbook/route");
+    const { POST: gift } = await import("@/app/api/birthday/[userId]/gift/route");
+
+    // Opt in with a birthday far from today so the page starts locked.
+    session.current = OWNER;
+    const in3Months = new Date(Date.now() + 90 * 86400000);
+    const mm = String(in3Months.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(Math.min(in3Months.getUTCDate(), 28)).padStart(2, "0");
+    const opt = await followRedirect(() =>
+      optin(form({ full_name: "Test Owner", email: "ignored@example.com", month: mm, day: dd, consent_checkbox_1: "on", consent_checkbox_2: "on" }))
+    );
+    expect(opt.location).toMatch(/^\/thanks\?user_id=/);
+    const user = await prisma.user.findUniqueOrThrow({ where: { firebaseUid: OWNER.uid }, include: { birthday_page: true } });
+    userId = user.id;
+    expect(user.email).toBe(OWNER.email); // login email wins over the form field
+    expect(user.birthday_page?.isLocked).toBe(true);
+
+    // A friend (signed out) sends a message.
+    session.current = null;
+    const sent = await followRedirect(() =>
+      contribute(form({ user_id: userId, contributor_name: "Test Friend", contributor_email: "friend@example.com", text_message_field: "Happy birthday from the test!", type: "text", permission_checkbox: "on" }))
+    );
+    expect(sent.location).toMatch(/^\/invite\/thanks/);
+    const contribution = await prisma.contribution.findFirstOrThrow({ where: { user_id: userId } });
+
+    // Another signed-in user cannot approve it; the owner can.
+    session.current = OTHER;
+    expect((await approve(form({ contribution_id: contribution.id }, "application/json"))).status).toBe(403);
+    session.current = OWNER;
+    expect((await approve(form({ contribution_id: contribution.id }))).status).toBe(303);
+
+    // Locked: the public API returns nothing yet; guestbook is closed.
+    session.current = null;
+    let json = await (await publicPage(new Request("http://x"), { params: { userId } })).json();
+    expect(json.page.unlocked).toBe(false);
+    expect(json.contributions).toEqual([]);
+    expect((await guestbook(form({ name: "Early", message: "too soon" }), { params: { userId } })).status).toBe(404);
+
+    // Birthday arrives: move the unlock time into the past and run the cron.
+    await prisma.birthdayPage.update({ where: { userId }, data: { unlockAt: new Date(Date.now() - 60000) } });
+    vi.stubEnv("CRON_SECRET", "test-cron-secret");
+    const cronRes = await cron(new Request("http://x", { headers: { authorization: "Bearer test-cron-secret" } }));
+    vi.unstubAllEnvs();
+    process.env.DATABASE_URL = TEST_DB;
+    expect(cronRes.status).toBe(200);
+    expect((await cronRes.json()).unlocked).toBeGreaterThanOrEqual(1);
+    expect((await prisma.birthdayPage.findUniqueOrThrow({ where: { userId } })).isLocked).toBe(false);
+
+    json = await (await publicPage(new Request("http://x"), { params: { userId } })).json();
+    expect(json.page.unlocked).toBe(true);
+    expect(json.contributions.map((c: { message_text: string }) => c.message_text)).toEqual(["Happy birthday from the test!"]);
+    expect(JSON.stringify(json)).not.toContain(OWNER.email);
+    expect(JSON.stringify(json)).not.toContain("friend@example.com");
+
+    // Visitors can sign the guestbook and add a gift note once open.
+    expect((await guestbook(form({ name: "Visitor", message: "Have a great day" }), { params: { userId } })).status).toBe(303);
+    expect((await gift(form({ from_name: "Visitor", title: "Book", amount: "20", goal: "0" }), { params: { userId } })).status).toBe(303);
+    json = await (await publicPage(new Request("http://x"), { params: { userId } })).json();
+    expect(json.guestbook).toHaveLength(1);
+    expect(json.gifts).toHaveLength(1);
+
+    // Owner can download the keepsake PDF; the owner can hide the page from visitors.
+    const { GET: pdf } = await import("@/app/api/birthday/[userId]/generate-pdf/route");
+    const { POST: privacy } = await import("@/app/api/birthday/[userId]/privacy/route");
+    session.current = OWNER;
+    const pdfRes = await pdf(new Request("http://x"), { params: { userId } });
+    expect(pdfRes.status).toBe(200);
+    expect(pdfRes.headers.get("content-type")).toContain("application/pdf");
+    expect((await privacy(form({ action: "pause" }), { params: { userId } })).status).toBe(303);
+    session.current = null;
+    expect((await publicPage(new Request("http://x"), { params: { userId } })).status).toBe(404);
+    session.current = OWNER;
+    expect((await privacy(form({ action: "resume" }), { params: { userId } })).status).toBe(303);
+  });
+
+  it("pause blocks new messages; export and erase only touch the caller", async () => {
+    const { POST: pause } = await import("@/app/api/pause/route");
+    const { POST: contribute } = await import("@/app/api/contribute/route");
+    const { GET: exportMe } = await import("@/app/api/me/export/route");
+    const { POST: erase } = await import("@/app/api/me/route");
+    const { GET: publicPage } = await import("@/app/api/birthday/[userId]/route");
+
+    session.current = OTHER;
+    expect((await pause(form({ user_id: userId }, "application/json"))).status).toBe(404); // the other login has no JoyDrop account, so nothing changes
+
+    session.current = OWNER;
+    expect((await pause(form({ user_id: userId, action: "pause" }))).status).toBe(303);
+    session.current = null;
+    const blocked = await contribute(
+      form({ user_id: userId, contributor_name: "Late", contributor_email: "late@example.com", text_message_field: "hi", type: "text", permission_checkbox: "on" })
+    );
+    expect(blocked.status).toBe(403);
+
+    session.current = OWNER;
+    expect((await pause(form({ user_id: userId, action: "resume" }))).status).toBe(303);
+    const exported = await (await exportMe()).json();
+    expect(exported.id).toBe(userId);
+    expect(exported.contributions).toHaveLength(1);
+
+    session.current = OTHER;
+    expect((await exportMe()).status).toBe(404);
+
+    session.current = OWNER;
+    expect((await erase(form({ confirm: "on" }))).status).toBe(303);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).soft_delete).toBe(true);
+    session.current = null;
+    expect((await publicPage(new Request("http://x"), { params: { userId } })).status).toBe(404);
+  });
+});

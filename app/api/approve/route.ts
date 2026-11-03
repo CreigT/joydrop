@@ -1,6 +1,5 @@
 import { databaseUnavailableResponse, hasDatabaseUrl } from "@/lib/database";
 import { seeOther } from "@/lib/http";
-import { LIMITS, tooLong } from "@/lib/input";
 import { prisma } from "@/lib/prisma";
 import { getCurrentFirebaseUser } from "@/lib/session";
 
@@ -17,8 +16,6 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const contributionId = String(formData.get("contribution_id") ?? "");
-  const surpriseId = String(formData.get("surprise_id") ?? "");
-  const scriptText = String(formData.get("script_text") ?? "").trim();
 
   if (contributionId) {
     const contribution = await prisma.contribution.findFirst({
@@ -57,50 +54,5 @@ export async function POST(request: Request) {
     return seeOther(request, "/dashboard");
   }
 
-  if (!surpriseId) {
-    return Response.json({ error: "Missing contribution_id or surprise_id." }, { status: 400 });
-  }
-
-  if (!scriptText || tooLong(scriptText, LIMITS.script)) {
-    return Response.json(
-      { error: `The speech text must be between 1 and ${LIMITS.script} characters.` },
-      { status: 400 }
-    );
-  }
-
-  const surprise = await prisma.surprise.findFirst({
-    where: {
-      id: surpriseId,
-      user: {
-        firebaseUid: session.uid,
-        soft_delete: false
-      }
-    }
-  });
-
-  if (!surprise) {
-    return Response.json({ error: "Surprise not found or access denied." }, { status: 403 });
-  }
-
-  const updatedSurprise = await prisma.surprise.update({
-    where: {
-      id: surpriseId
-    },
-    data: {
-      script_text: scriptText,
-      status: "approved"
-    }
-  });
-
-  await prisma.auditLog.create({
-    data: {
-      action: "surprise_approved",
-      user_id: updatedSurprise.user_id,
-      meta_json: {
-        surprise_id: updatedSurprise.id
-      }
-    }
-  });
-
-  return seeOther(request, "/dashboard");
+  return Response.json({ error: "Missing contribution_id." }, { status: 400 });
 }

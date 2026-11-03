@@ -18,7 +18,6 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/birthday/:path*/edit",
-    "/api/generate",
     "/api/approve"
   ]
 };
